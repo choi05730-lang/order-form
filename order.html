@@ -8,14 +8,13 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --primary: #6c3fff;
-      --primary-light: #ede9ff;
-      --primary-dark: #3b1f8c;
-      --text: #1a1a2e;
-      --sub: #888;
-      --border: #e8e8e8;
-      --bg: #f5f4ff;
-      --card: #fff;
+      --primary: #F97316;
+      --primary-light: #FFF7ED;
+      --text: #1A1A1A;
+      --sub: #999;
+      --border: #EBEBEB;
+      --input-bg: #F5F5F5;
+      --bg: #fff;
     }
 
     body {
@@ -27,440 +26,374 @@
 
     /* ── 헤더 ── */
     .header {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      padding: 28px 20px 24px;
-      text-align: center;
-      color: #fff;
+      padding: 28px 24px 0;
     }
-    .header-icon { font-size: 36px; margin-bottom: 8px; }
-    .header h1  { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-    .header p   { font-size: 13px; opacity: .8; }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .header p {
+      font-size: 13px;
+      color: var(--sub);
+      margin-top: 4px;
+    }
 
-    /* ── 스텝 인디케이터 ── */
+    /* ── 스텝 탭 ── */
     .steps {
       display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 0;
-      padding: 18px 20px;
-      background: #fff;
-      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      margin-top: 24px;
+      border-bottom: 1.5px solid var(--border);
     }
     .step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
       flex: 1;
-      position: relative;
-    }
-    .step::after {
-      content: '';
-      position: absolute;
-      top: 14px;
-      left: calc(50% + 14px);
-      right: calc(-50% + 14px);
-      height: 2px;
-      background: var(--border);
-    }
-    .step:last-child::after { display: none; }
-    .step-circle {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--border);
-      color: var(--sub);
-      font-size: 12px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      z-index: 1;
-      transition: all .3s;
-    }
-    .step.active .step-circle  { background: var(--primary); color: #fff; }
-    .step.done   .step-circle  { background: #10b981; color: #fff; }
-    .step-label {
-      font-size: 10px;
-      color: var(--sub);
+      text-align: center;
+      padding-bottom: 12px;
+      font-size: 13px;
       font-weight: 600;
-      white-space: nowrap;
+      color: var(--sub);
+      border-bottom: 2.5px solid transparent;
+      margin-bottom: -1.5px;
+      cursor: default;
     }
-    .step.active .step-label { color: var(--primary); }
-    .step.done   .step-label { color: #10b981; }
-
-    /* ── 공통 카드 ── */
-    .card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.06);
-      margin: 16px;
-    }
-    .card-title {
-      font-size: 15px;
-      font-weight: 700;
+    .step.active {
       color: var(--primary);
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      border-bottom-color: var(--primary);
     }
+    .step.done { color: var(--sub); }
 
-    /* ── 단계별 뷰 ── */
+    /* ── 뷰 ── */
     .view { display: none; }
     .view.active { display: block; }
 
-    /* ── 1단계: 입력 폼 ── */
-    .input-group { margin-bottom: 14px; }
-
-    /* ── 버튼 ── */
-    .btn-primary {
-      display: block;
-      width: 100%;
-      padding: 15px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: #fff;
-      font-size: 15px;
+    /* ── 섹션 ── */
+    .section {
+      padding: 24px 24px 0;
+    }
+    .section-title {
+      font-size: 13px;
       font-weight: 700;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: opacity .2s;
-      margin-top: 14px;
-    }
-    .btn-primary:hover  { opacity: .88; }
-    .btn-primary:active { opacity: .75; }
-
-    .btn-secondary {
-      display: block;
-      width: 100%;
-      padding: 13px;
-      background: #fff;
-      color: var(--primary);
-      font-size: 14px;
-      font-weight: 600;
-      border: 1.5px solid var(--primary);
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all .2s;
-      margin-top: 10px;
-    }
-    .btn-secondary:hover { background: var(--primary-light); }
-
-    /* ── 로딩 ── */
-    .loading-box {
-      text-align: center;
-      padding: 30px 0;
       color: var(--sub);
-      font-size: 14px;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: .3px;
     }
-    .loading-spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid var(--primary-light);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-      margin: 0 auto 12px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── 2단계: 파싱된 주문 필드 ── */
-    .order-fields {
+    /* ── 입력 그룹 ── */
+    .input-group {
       margin-bottom: 14px;
     }
-    .order-field-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .order-field-row:last-child { border-bottom: none; }
-    .order-field-key {
-      flex: 0 0 96px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--sub);
-      padding-top: 2px;
-    }
-    .order-field-val {
-      flex: 1;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-      word-break: break-all;
-    }
-    .order-field-val.price { color: #e53935; font-size: 16px; }
-    .order-field-val.empty { color: #bbb; font-weight: 400; }
-
-    /* ── 3단계: 주문 요약 미리보기 ── */
-    .order-summary-preview {
-      background: var(--primary-light);
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-bottom: 16px;
-    }
-    .order-summary-row {
-      display: flex;
-      gap: 10px;
-      font-size: 13px;
-      padding: 4px 0;
-      color: var(--primary-dark);
-    }
-    .order-summary-key {
-      flex: 0 0 80px;
-      font-weight: 700;
-      opacity: .7;
-    }
-    .order-summary-val { flex: 1; font-weight: 600; }
-
-    /* ── 3단계: 고객 정보 ── */
-    .input-group { margin-bottom: 16px; }
     .input-group label {
       display: block;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--text);
-      margin-bottom: 8px;
+      margin-bottom: 7px;
     }
-    .input-group label span {
+    .input-group label .req {
       color: var(--primary);
       margin-left: 2px;
     }
     .input-field {
       width: 100%;
-      padding: 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      font-size: 16px;
+      padding: 14px 16px;
+      background: var(--input-bg);
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
       font-family: inherit;
       color: var(--text);
       outline: none;
-      transition: border-color .2s;
+      transition: background .15s;
     }
-    .input-field:focus { border-color: var(--primary); }
-    .input-field::placeholder { color: #bbb; }
+    .input-field:focus { background: #EFEFEF; }
+    .input-field::placeholder { color: #C0C0C0; }
 
-    /* 최종 확인 미리보기 */
-    .confirm-preview {
+    /* ── 버튼 ── */
+    .btn-primary {
+      display: block;
+      width: calc(100% - 48px);
+      margin: 20px 24px 0;
+      padding: 16px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-primary:active { opacity: .85; }
+
+    .btn-secondary {
+      display: block;
+      width: calc(100% - 48px);
+      margin: 10px 24px 0;
+      padding: 15px;
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-secondary:active { background: #E8E8E8; }
+
+    /* ── 링크 박스 ── */
+    .link-box {
+      margin: 20px 24px 0;
+      padding: 16px;
+      background: #F0FDF4;
+      border-radius: 12px;
+    }
+    .link-box-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #16A34A;
+      margin-bottom: 8px;
+    }
+    .link-text {
+      font-size: 12px;
+      color: #166534;
+      word-break: break-all;
+      line-height: 1.6;
+    }
+    .btn-copy {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      padding: 13px;
+      background: #16A34A;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .btn-preview {
+      display: block;
+      width: 100%;
+      margin-top: 8px;
+      padding: 13px;
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    /* ── 주문 필드 리스트 (2단계) ── */
+    .field-list {
+      margin: 0 24px;
+    }
+    .field-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+    }
+    .field-row:last-child { border-bottom: none; }
+    .field-key {
+      font-size: 14px;
+      color: var(--sub);
+      flex-shrink: 0;
+      width: 90px;
+    }
+    .field-val {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      text-align: right;
+      word-break: break-all;
+    }
+    .field-val.price {
+      color: var(--primary);
+      font-size: 16px;
+    }
+    .field-val.empty {
+      color: #CCC;
+      font-weight: 400;
+    }
+
+    /* ── 주문 요약 (3단계) ── */
+    .summary-box {
+      margin: 0 24px;
       background: var(--primary-light);
       border-radius: 12px;
-      padding: 14px;
-      margin-top: 4px;
-      margin-bottom: 16px;
+      padding: 4px 16px;
     }
-    .confirm-preview p {
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #FFE8D0;
       font-size: 13px;
-      color: var(--primary-dark);
-      line-height: 1.8;
     }
-    .confirm-preview strong { font-weight: 700; }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-key { color: #C2410C; font-weight: 600; }
+    .summary-val { color: var(--text); font-weight: 700; }
 
     /* ── 토스트 ── */
     .toast {
       position: fixed;
-      bottom: 30px;
+      bottom: 32px;
       left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: #333;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(0,0,0,.75);
       color: #fff;
       padding: 11px 22px;
       border-radius: 50px;
       font-size: 14px;
       opacity: 0;
-      transition: all .3s;
+      transition: all .25s;
       pointer-events: none;
       white-space: nowrap;
       z-index: 999;
     }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-    /* 하단 여백 */
-    .bottom-pad { height: 40px; }
+    .bottom-pad { height: 48px; }
   </style>
 </head>
 <body>
 
   <!-- 헤더 -->
   <div class="header">
-    <div class="header-icon">🎁</div>
-    <h1>답례품 주문 확인</h1>
+    <h1>🎁 답례품 주문</h1>
     <p>주문 내용을 확인하고 정보를 입력해주세요</p>
   </div>
 
-  <!-- 스텝 인디케이터 -->
+  <!-- 스텝 탭 -->
   <div class="steps">
-    <div class="step active" id="step1">
-      <div class="step-circle">1</div>
-      <div class="step-label">내용 붙여넣기</div>
-    </div>
-    <div class="step" id="step2">
-      <div class="step-circle">2</div>
-      <div class="step-label">주문 확인</div>
-    </div>
-    <div class="step" id="step3">
-      <div class="step-circle">3</div>
-      <div class="step-label">정보 입력</div>
-    </div>
+    <div class="step active" id="step1">주문 입력</div>
+    <div class="step" id="step2">주문 확인</div>
+    <div class="step" id="step3">정보 입력</div>
   </div>
 
-  <!-- 1단계: 주문 내용 직접 입력 (운영자 전용) -->
+  <!-- 1단계: 주문 내용 직접 입력 (운영자) -->
   <div class="view active" id="view1">
-    <div class="card">
-      <div class="card-title">📋 주문 내용 입력</div>
-
+    <div class="section" style="margin-top:8px;">
       <div class="input-group">
-        <label>제품명 <span>*</span></label>
-        <input class="input-field" id="inputProduct" type="text"
-               placeholder="예) 구움과자" />
+        <label>제품명 <span class="req">*</span></label>
+        <input class="input-field" id="inputProduct" type="text" placeholder="예) 구움과자" />
       </div>
-
       <div class="input-group">
-        <label>구움과자 종류 <span>*</span></label>
-        <input class="input-field" id="inputTypes" type="text"
-               placeholder="예) 플레인, 무화과, 솔티드, 두바이" />
+        <label>구움과자 종류 <span class="req">*</span></label>
+        <input class="input-field" id="inputTypes" type="text" placeholder="예) 플레인, 무화과, 솔티드, 두바이" />
       </div>
-
       <div class="input-group">
         <label>박스 갯수</label>
-        <input class="input-field" id="inputQuantity" type="text"
-               placeholder="예) 3구 박스 1개" />
+        <input class="input-field" id="inputQuantity" type="text" placeholder="예) 3구 박스 1개" />
       </div>
-
       <div class="input-group">
-        <label>가격 <span>*</span></label>
-        <input class="input-field" id="inputPrice" type="text"
-               placeholder="예) 274,000원" />
+        <label>가격 <span class="req">*</span></label>
+        <input class="input-field" id="inputPrice" type="text" placeholder="예) 274,000원" />
       </div>
-
       <div class="input-group">
         <label>비고</label>
-        <input class="input-field" id="inputNote" type="text"
-               placeholder="예) 택배비 제외, 스티커 포함 등" />
+        <input class="input-field" id="inputNote" type="text" placeholder="예) 택배비 제외, 스티커 포함 등" />
       </div>
-
-      <button class="btn-primary" onclick="goToSummary()">고객 링크 만들기 →</button>
     </div>
 
-    <!-- 링크 생성 후 표시 영역 -->
-    <div class="card" id="linkCard" style="display:none;">
-      <div class="card-title">🔗 고객 링크</div>
-      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;word-break:break-all;color:#166534;" id="generatedLink"></div>
-      <button class="btn-primary" style="background:linear-gradient(135deg,#10b981,#059669);" onclick="copyLink()">링크 복사하기</button>
-      <button class="btn-secondary" onclick="previewAsCustomer()">고객 화면 미리보기</button>
+    <button class="btn-primary" onclick="goToSummary()">고객 링크 만들기 →</button>
+
+    <!-- 링크 생성 영역 -->
+    <div id="linkCard" style="display:none;">
+      <div class="link-box" style="margin-top:20px; margin-left:24px; margin-right:24px;">
+        <div class="link-box-label">✓ 고객 링크 생성 완료</div>
+        <div class="link-text" id="generatedLink"></div>
+        <button class="btn-copy" onclick="copyLink()">링크 복사하기</button>
+        <button class="btn-preview" onclick="previewAsCustomer()">고객 화면 미리보기</button>
+      </div>
     </div>
   </div>
 
   <!-- 2단계: 주문 내용 확인 -->
   <div class="view" id="view2">
-    <div class="card">
-      <div class="card-title">📝 주문 내용 확인</div>
-
-      <!-- 로딩 상태 -->
-      <div class="loading-box" id="parseLoading" style="display:none;">
-        <div class="loading-spinner"></div>
-        AI가 주문 내용을 정리하고 있어요...
-      </div>
-
-      <!-- 파싱된 필드 -->
-      <div class="order-fields" id="orderFields">
-        <div class="order-field-row">
-          <span class="order-field-key">제품명</span>
-          <span class="order-field-val" id="fieldProduct"></span>
-        </div>
-        <div class="order-field-row">
-          <span class="order-field-key">구움과자 종류</span>
-          <span class="order-field-val" id="fieldTypes"></span>
-        </div>
-        <div class="order-field-row">
-          <span class="order-field-key">박스 갯수</span>
-          <span class="order-field-val" id="fieldQuantity"></span>
-        </div>
-        <div class="order-field-row">
-          <span class="order-field-key">가격</span>
-          <span class="order-field-val price" id="fieldPrice"></span>
-        </div>
-        <div class="order-field-row">
-          <span class="order-field-key">비고</span>
-          <span class="order-field-val" id="fieldNote"></span>
-        </div>
-      </div>
-
-      <button class="btn-primary" onclick="goToStep(3)">이 내용으로 진행하기 →</button>
-      <button class="btn-secondary" onclick="goToStep(1)">← 다시 붙여넣기</button>
+    <div class="section" style="margin-top:8px; padding-bottom:0;">
+      <div class="section-title">주문 내용</div>
     </div>
+    <div class="field-list">
+      <div class="field-row">
+        <span class="field-key">제품명</span>
+        <span class="field-val" id="fieldProduct"></span>
+      </div>
+      <div class="field-row">
+        <span class="field-key">구움과자 종류</span>
+        <span class="field-val" id="fieldTypes"></span>
+      </div>
+      <div class="field-row">
+        <span class="field-key">박스 갯수</span>
+        <span class="field-val" id="fieldQuantity"></span>
+      </div>
+      <div class="field-row">
+        <span class="field-key">가격</span>
+        <span class="field-val price" id="fieldPrice"></span>
+      </div>
+      <div class="field-row">
+        <span class="field-key">비고</span>
+        <span class="field-val" id="fieldNote"></span>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="goToStep(3)">이 내용으로 진행하기 →</button>
+    <button class="btn-secondary" onclick="goToStep(1)">← 다시 입력하기</button>
   </div>
 
   <!-- 3단계: 고객 정보 입력 -->
   <div class="view" id="view3">
-    <div class="card">
-      <div class="card-title">👤 고객 정보 입력</div>
-
+    <div class="section" style="margin-top:8px;">
       <div class="input-group">
-        <label>고객명 <span>*</span></label>
-        <input class="input-field" id="customerName" type="text"
-               placeholder="이름을 입력해주세요" />
+        <label>고객명 <span class="req">*</span></label>
+        <input class="input-field" id="customerName" type="text" placeholder="이름을 입력해주세요" />
       </div>
-
       <div class="input-group">
-        <label>핸드폰 번호 <span>*</span></label>
+        <label>핸드폰 번호 <span class="req">*</span></label>
         <input class="input-field" id="customerPhone" type="tel"
-               placeholder="010-0000-0000"
-               oninput="formatPhone(this)" />
+               placeholder="010-0000-0000" oninput="formatPhone(this)" />
       </div>
     </div>
 
-    <!-- 주문 내용 미리보기 -->
-    <div class="card">
-      <div class="card-title">🔍 주문 내용</div>
-      <div class="order-summary-preview" id="orderSummaryPreview"></div>
+    <div class="section" style="margin-top:20px; padding-bottom:0;">
+      <div class="section-title">주문 내용 확인</div>
+    </div>
+    <div class="summary-box">
+      <div id="orderSummaryPreview"></div>
     </div>
 
-    <div style="margin: 0 16px;">
-      <button class="btn-primary" onclick="submitOrder()">주문 확인 완료 →</button>
-      <button class="btn-secondary" onclick="goToStep(2)">← 주문 내용 수정</button>
-    </div>
+    <button class="btn-primary" onclick="submitOrder()">주문 확인 완료 →</button>
+    <button class="btn-secondary" onclick="goToStep(2)">← 주문 내용 수정</button>
   </div>
 
   <div class="bottom-pad"></div>
   <div class="toast" id="toast"></div>
 
   <script>
-    // 파싱된 주문 데이터
-    let parsedOrder = { product: '', types: '', quantity: '', price: '' };
+    let parsedOrder = { product: '', types: '', quantity: '', price: '', note: '' };
 
-    // ── 초기 진입 처리 (URL 파라미터 확인) ──
     function init() {
       const params = new URLSearchParams(window.location.search);
       const dataParam = params.get('d');
-      const textParam = params.get('t'); // 구버전 호환
-
       if (dataParam) {
-        // 고객 진입: 파싱된 JSON 데이터
-        try {
-          parsedOrder = JSON.parse(decodeURIComponent(atob(dataParam)));
-        } catch(e) {
-          parsedOrder = { product:'', types:'', quantity:'', price:'' };
-        }
+        try { parsedOrder = JSON.parse(decodeURIComponent(atob(dataParam))); }
+        catch(e) { parsedOrder = { product:'', types:'', quantity:'', price:'', note:'' }; }
         renderOrderFields(parsedOrder);
         document.getElementById('step1').style.display = 'none';
         goToStep(2);
-      } else if (textParam) {
-        // 구버전 호환: 텍스트 파라미터 → AI 파싱
-        let raw = '';
-        try { raw = decodeURIComponent(atob(textParam)); }
-        catch(e) { raw = decodeURIComponent(textParam); }
-        document.getElementById('step1').style.display = 'none';
-        goToStep(2);
-        callParseAPI(raw);
       }
-      // 파라미터 없으면 운영자 모드 (1단계부터)
     }
 
-    // ── 1단계: 필드 입력 → 링크 생성 ──
     function goToSummary() {
       const product  = document.getElementById('inputProduct').value.trim();
       const types    = document.getElementById('inputTypes').value.trim();
@@ -472,7 +405,6 @@
       if (!price)   { showToast('가격을 입력해주세요.'); return; }
 
       parsedOrder = { product, types, quantity, price, note };
-
       renderOrderFields(parsedOrder);
 
       const encoded = btoa(encodeURIComponent(JSON.stringify(parsedOrder)));
@@ -485,13 +417,8 @@
     function renderOrderFields(data) {
       const set = (id, val) => {
         const el = document.getElementById(id);
-        if (val) {
-          el.textContent = val;
-          el.classList.remove('empty');
-        } else {
-          el.textContent = '정보 없음';
-          el.classList.add('empty');
-        }
+        if (val) { el.textContent = val; el.classList.remove('empty'); }
+        else     { el.textContent = '-'; el.classList.add('empty'); }
       };
       set('fieldProduct',  data.product);
       set('fieldTypes',    data.types);
@@ -504,13 +431,11 @@
       const link = document.getElementById('generatedLink').textContent;
       navigator.clipboard.writeText(link).catch(() => {
         const el = document.createElement('textarea');
-        el.value = link;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
+        el.value = link; document.body.appendChild(el);
+        el.select(); document.execCommand('copy');
         document.body.removeChild(el);
       });
-      showToast('링크가 복사됐어요! 카카오톡으로 전송하세요.');
+      showToast('링크가 복사됐어요!');
     }
 
     function previewAsCustomer() {
@@ -518,31 +443,26 @@
       goToStep(2);
     }
 
-    // ── 주문 제출 ──
     function submitOrder() {
       const name  = document.getElementById('customerName').value.trim();
       const phone = document.getElementById('customerPhone').value.trim();
-      if (!name)  { showToast('고객명을 입력해주세요.'); return; }
-      if (!phone || phone.length < 12) { showToast('핸드폰 번호를 정확히 입력해주세요.'); return; }
+      if (!name)               { showToast('고객명을 입력해주세요.'); return; }
+      if (phone.length < 12)   { showToast('핸드폰 번호를 정확히 입력해주세요.'); return; }
 
-      // 나중에 Supabase 저장 로직이 들어올 자리
       const orderData = { ...parsedOrder, customerName: name, customerPhone: phone };
       console.log('주문 데이터:', orderData);
-
       showToast('주문 확인이 완료되었어요!');
-      // TODO: 4단계 (계좌 안내 화면)로 이동
+      // TODO: Supabase 저장 + 4단계 계좌 안내
     }
 
-    // ── 스텝 이동 ──
     function goToStep(n) {
       [1,2,3].forEach(i => {
         document.getElementById(`view${i}`).classList.toggle('active', i === n);
-        const stepEl = document.getElementById(`step${i}`);
-        stepEl.classList.remove('active','done');
-        if (i === n) stepEl.classList.add('active');
-        else if (i < n) stepEl.classList.add('done');
+        const s = document.getElementById(`step${i}`);
+        s.classList.remove('active','done');
+        if (i === n) s.classList.add('active');
+        else if (i < n) s.classList.add('done');
       });
-      // 3단계 진입 시 미리보기 업데이트
       if (n === 3) renderSummaryPreview();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -555,33 +475,28 @@
         { key: '가격',         val: parsedOrder.price },
         { key: '비고',         val: parsedOrder.note },
       ];
-      const html = fields.map(f =>
-        `<div class="order-summary-row">
-          <span class="order-summary-key">${f.key}</span>
-          <span class="order-summary-val">${f.val || '-'}</span>
+      document.getElementById('orderSummaryPreview').innerHTML = fields.map(f =>
+        `<div class="summary-row">
+          <span class="summary-key">${f.key}</span>
+          <span class="summary-val">${f.val || '-'}</span>
         </div>`
       ).join('');
-      document.getElementById('orderSummaryPreview').innerHTML = html;
     }
 
-    // ── 전화번호 자동 포맷 ──
     function formatPhone(el) {
-      let v = el.value.replace(/\D/g, '').slice(0, 11);
-      if (v.length <= 3) el.value = v;
-      else if (v.length <= 7) el.value = v.slice(0,3) + '-' + v.slice(3);
-      else el.value = v.slice(0,3) + '-' + v.slice(3,7) + '-' + v.slice(7);
+      let v = el.value.replace(/\D/g,'').slice(0,11);
+      if (v.length <= 3)      el.value = v;
+      else if (v.length <= 7) el.value = v.slice(0,3)+'-'+v.slice(3);
+      else                    el.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7);
     }
 
-    // ── 시작 ──
-    init();
-
-    // ── 유틸 ──
     function showToast(msg) {
       const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
+      t.textContent = msg; t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 2500);
     }
+
+    init();
   </script>
 </body>
 </html>
