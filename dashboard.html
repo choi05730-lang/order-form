@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>주문 대시보드</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #6c3fff;
+      --primary-light: #ede9ff;
+      --pending: #f59e0b;
+      --pending-bg: #fef3c7;
+      --paid: #3b82f6;
+      --paid-bg: #dbeafe;
+      --completed: #10b981;
+      --completed-bg: #d1fae5;
+      --cancel: #ef4444;
+      --cancel-bg: #fee2e2;
+      --text: #1a1a2e;
+      --sub: #888;
+      --border: #eee;
+      --bg: #f4f3ff;
+    }
+
+    body {
+      font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+    }
+
+    /* ── 헤더 ── */
+    .header {
+      background: linear-gradient(135deg, #6c3fff, #3b1f8c);
+      padding: 20px 16px 28px;
+      color: #fff;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .header h1 { font-size: 20px; font-weight: 700; }
+    .header-date { font-size: 13px; opacity: .75; }
+
+    /* 통계 카드 */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,.15);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .stat-card .num {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+    .stat-card .lbl {
+      font-size: 11px;
+      opacity: .8;
+      margin-top: 3px;
+    }
+
+    /* ── 탭 ── */
+    .tab-bar {
+      display: flex;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--sub);
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* ── 콘텐츠 ── */
+    .content { padding: 16px; }
+
+    /* ── 필터 ── */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+    .filter-btn {
+      flex-shrink: 0;
+      padding: 7px 14px;
+      border-radius: 50px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--sub);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .filter-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    /* ── 주문 카드 ── */
+    .order-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .order-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      cursor: pointer;
+      transition: transform .15s;
+    }
+    .order-card:active { transform: scale(.98); }
+
+    .order-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .customer-name { font-size: 16px; font-weight: 700; }
+    .customer-phone { font-size: 12px; color: var(--sub); margin-top: 2px; }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .status-badge.pending    { background: var(--pending-bg);   color: var(--pending); }
+    .status-badge.paid       { background: var(--paid-bg);      color: var(--paid); }
+    .status-badge.completed  { background: var(--completed-bg); color: var(--completed); }
+    .status-badge.cancelled  { background: var(--cancel-bg);    color: var(--cancel); }
+
+    .order-info { display: flex; flex-direction: column; gap: 5px; }
+    .info-row {
+      display: flex;
+      gap: 8px;
+      font-size: 13px;
+    }
+    .info-key { color: var(--sub); flex: 0 0 64px; }
+    .info-val { font-weight: 500; color: var(--text); }
+
+    .order-card-bottom {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .desired-date { font-size: 13px; color: var(--sub); }
+    .desired-date strong { color: var(--primary); }
+
+    /* ── 캘린더 ── */
+    .calendar-wrap { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+
+    .cal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .cal-header h2 { font-size: 17px; font-weight: 700; }
+    .cal-nav {
+      display: flex;
+      gap: 8px;
+    }
+    .cal-nav button {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 12px;
+      color: var(--sub);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .cal-weekdays span:first-child { color: #ef4444; }
+    .cal-weekdays span:last-child  { color: #3b82f6; }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .cal-cell {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 4px 2px;
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+    }
+    .cal-cell:hover { background: var(--primary-light); }
+    .cal-cell.empty { cursor: default; }
+    .cal-cell.empty:hover { background: none; }
+    .cal-cell.today .day-num {
+      background: var(--primary);
+      color: #fff;
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .day-num {
+      font-size: 13px;
+      font-weight: 600;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cal-cell:nth-child(7n+1) .day-num { color: #ef4444; }
+    .cal-cell:nth-child(7n)   .day-num { color: #3b82f6; }
+
+    .cal-dots {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2px;
+      margin-top: 2px;
+    }
+    .cal-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .cal-dot.pending   { background: var(--pending); }
+    .cal-dot.paid      { background: var(--paid); }
+    .cal-dot.completed { background: var(--completed); }
+
+    /* 캘린더 아래 선택된 날짜 주문 */
+    .cal-day-orders {
+      margin-top: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+      display: none;
+    }
+    .cal-day-orders.visible { display: block; }
+    .cal-day-orders h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    /* ── 모달 ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 100;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      padding: 24px 20px 40px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 85vh;
+      overflow-y: auto;
+      animation: slideUp .25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    .modal-handle {
+      width: 40px;
+      height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .modal-header h2 { font-size: 18px; font-weight: 700; }
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-fields { display: flex; flex-direction: column; gap: 0; margin-bottom: 20px; }
+    .modal-field {
+      display: flex;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .modal-field:last-child { border-bottom: none; }
+    .modal-field-key { flex: 0 0 90px; color: var(--sub); }
+    .modal-field-val { flex: 1; font-weight: 600; word-break: break-all; }
+
+    .status-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .status-buttons h3 {
+      grid-column: 1 / -1;
+      font-size: 14px;
+      color: var(--sub);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .status-change-btn {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .status-change-btn.pending   { border-color: var(--pending);   color: var(--pending); }
+    .status-change-btn.paid      { border-color: var(--paid);      color: var(--paid); }
+    .status-change-btn.completed { border-color: var(--completed); color: var(--completed); }
+    .status-change-btn.active    { color: #fff; }
+    .status-change-btn.pending.active   { background: var(--pending);   border-color: var(--pending); }
+    .status-change-btn.paid.active      { background: var(--paid);      border-color: var(--paid); }
+    .status-change-btn.completed.active { background: var(--completed); border-color: var(--completed); }
+
+    .btn-delete {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      background: var(--cancel-bg);
+      color: var(--cancel);
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* 빈 상태 */
+    .empty-state {
+      text-align: center;
+      padding: 48px 0;
+      color: var(--sub);
+    }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <!-- 헤더 -->
+  <div class="header">
+    <div class="header-top">
+      <h1>🎁 주문 대시보드</h1>
+      <span class="header-date" id="todayLabel"></span>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="num" id="statTotal">0</div>
+        <div class="lbl">전체</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="statPending">0</div>
+        <div class="lbl">입금대기</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="statPaid">0</div>
+        <div class="lbl">입금확인</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="statCompleted">0</div>
+        <div class="lbl">완료</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 탭 -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('list', this)">목록</button>
+    <button class="tab-btn"        onclick="switchTab('calendar', this)">캘린더</button>
+  </div>
+
+  <!-- 목록 뷰 -->
+  <div class="content" id="view-list">
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterOrders('all', this)">전체</button>
+      <button class="filter-btn" onclick="filterOrders('pending', this)">입금대기</button>
+      <button class="filter-btn" onclick="filterOrders('paid', this)">입금확인</button>
+      <button class="filter-btn" onclick="filterOrders('completed', this)">완료</button>
+    </div>
+    <div class="order-list" id="orderList"></div>
+  </div>
+
+  <!-- 캘린더 뷰 -->
+  <div class="content" id="view-calendar" style="display:none;">
+    <div class="calendar-wrap">
+      <div class="cal-header">
+        <h2 id="calTitle"></h2>
+        <div class="cal-nav">
+          <button onclick="changeMonth(-1)">‹</button>
+          <button onclick="changeMonth(1)">›</button>
+        </div>
+      </div>
+      <div class="cal-weekdays">
+        <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-day-orders" id="calDayOrders">
+        <h3 id="calDayTitle"></h3>
+        <div class="order-list" id="calDayList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달 -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" id="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 id="modalTitle">주문 상세</h2>
+        <button class="modal-close" onclick="closeModalDirect()">✕</button>
+      </div>
+      <div class="modal-fields" id="modalFields"></div>
+      <div class="status-buttons">
+        <h3>상태 변경</h3>
+        <button class="status-change-btn pending"   onclick="changeStatus('pending')">입금대기</button>
+        <button class="status-change-btn paid"      onclick="changeStatus('paid')">입금확인</button>
+        <button class="status-change-btn completed" onclick="changeStatus('completed')">완료</button>
+      </div>
+      <button class="btn-delete" onclick="deleteOrder()">주문 삭제</button>
+    </div>
+  </div>
+
+  <script>
+    // ── Mock 데이터 (나중에 Supabase로 교체) ──
+    let orders = [
+      {
+        id: 1, customerName: '김민지', phone: '010-1234-5678',
+        product: '꿀 선물세트', composition: '아카시아꿀 500g × 2',
+        quantity: '5개', desiredDate: '2026-04-20',
+        notes: '리본 포장 부탁드려요', status: 'pending',
+        customerConfirmed: true
+      },
+      {
+        id: 2, customerName: '박준혁', phone: '010-2345-6789',
+        product: '한과 선물세트', composition: '약과+강정 혼합',
+        quantity: '10개', desiredDate: '2026-04-22',
+        notes: '', status: 'paid',
+        customerConfirmed: true
+      },
+      {
+        id: 3, customerName: '이수연', phone: '010-3456-7890',
+        product: '꿀 선물세트', composition: '아카시아꿀 1kg',
+        quantity: '3개', desiredDate: '2026-04-25',
+        notes: '생일 선물이에요', status: 'completed',
+        customerConfirmed: true
+      },
+      {
+        id: 4, customerName: '최동욱', phone: '010-4567-8901',
+        product: '전통차 세트', composition: '오미자+유자 혼합',
+        quantity: '7개', desiredDate: '2026-04-28',
+        notes: '', status: 'pending',
+        customerConfirmed: false
+      },
+      {
+        id: 5, customerName: '정유리', phone: '010-5678-9012',
+        product: '꿀 선물세트', composition: '아카시아꿀 500g',
+        quantity: '2개', desiredDate: '2026-05-03',
+        notes: '메시지카드 포함', status: 'paid',
+        customerConfirmed: true
+      },
+      {
+        id: 6, customerName: '한상훈', phone: '010-6789-0123',
+        product: '견과류 선물세트', composition: '호두+아몬드+캐슈넛',
+        quantity: '4개', desiredDate: '2026-04-20',
+        notes: '', status: 'pending',
+        customerConfirmed: false
+      },
+    ];
+
+    const STATUS_LABEL = { pending: '입금대기', paid: '입금확인', completed: '완료', cancelled: '취소' };
+    let currentFilter = 'all';
+    let currentOrderId = null;
+    let calYear, calMonth;
+
+    // 오늘 날짜
+    const today = new Date();
+    calYear  = today.getFullYear();
+    calMonth = today.getMonth();
+
+    document.getElementById('todayLabel').textContent =
+      `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
+
+    // ── 탭 전환 ──
+    function switchTab(name, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('view-list').style.display     = name === 'list'     ? 'block' : 'none';
+      document.getElementById('view-calendar').style.display = name === 'calendar' ? 'block' : 'none';
+      if (name === 'calendar') renderCalendar();
+    }
+
+    // ── 통계 ──
+    function updateStats() {
+      document.getElementById('statTotal').textContent     = orders.length;
+      document.getElementById('statPending').textContent   = orders.filter(o => o.status === 'pending').length;
+      document.getElementById('statPaid').textContent      = orders.filter(o => o.status === 'paid').length;
+      document.getElementById('statCompleted').textContent = orders.filter(o => o.status === 'completed').length;
+    }
+
+    // ── 목록 렌더 ──
+    function renderList() {
+      const filtered = currentFilter === 'all' ? orders : orders.filter(o => o.status === currentFilter);
+      const container = document.getElementById('orderList');
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>주문이 없어요</p></div>`;
+        return;
+      }
+      container.innerHTML = filtered.map(o => `
+        <div class="order-card" onclick="openModal(${o.id})">
+          <div class="order-card-top">
+            <div>
+              <div class="customer-name">${o.customerName}</div>
+              <div class="customer-phone">${o.phone}</div>
+            </div>
+            <span class="status-badge ${o.status}">${STATUS_LABEL[o.status]}</span>
+          </div>
+          <div class="order-info">
+            <div class="info-row"><span class="info-key">제품</span><span class="info-val">${o.product}</span></div>
+            <div class="info-row"><span class="info-key">구성</span><span class="info-val">${o.composition}</span></div>
+            <div class="info-row"><span class="info-key">수량</span><span class="info-val">${o.quantity}</span></div>
+            ${o.notes ? `<div class="info-row"><span class="info-key">비고</span><span class="info-val">${o.notes}</span></div>` : ''}
+          </div>
+          <div class="order-card-bottom">
+            <span class="desired-date">받기 원하는 날짜: <strong>${formatDate(o.desiredDate)}</strong></span>
+            <span style="font-size:12px;color:${o.customerConfirmed ? '#10b981' : '#f59e0b'}">
+              ${o.customerConfirmed ? '✓ 고객확인' : '미확인'}
+            </span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterOrders(status, btn) {
+      currentFilter = status;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderList();
+    }
+
+    // ── 캘린더 렌더 ──
+    function renderCalendar() {
+      const title = `${calYear}년 ${calMonth + 1}월`;
+      document.getElementById('calTitle').textContent = title;
+
+      const firstDay = new Date(calYear, calMonth, 1).getDay();
+      const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+
+      // 날짜별 주문 인덱스
+      const ordersByDate = {};
+      orders.forEach(o => {
+        const d = o.desiredDate; // 'YYYY-MM-DD'
+        if (!ordersByDate[d]) ordersByDate[d] = [];
+        ordersByDate[d].push(o);
+      });
+
+      let html = '';
+      // 빈 칸
+      for (let i = 0; i < firstDay; i++) {
+        html += `<div class="cal-cell empty"></div>`;
+      }
+      // 날짜
+      for (let d = 1; d <= lastDate; d++) {
+        const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isToday = (calYear === today.getFullYear() && calMonth === today.getMonth() && d === today.getDate());
+        const dayOrders = ordersByDate[dateStr] || [];
+        const dots = dayOrders.slice(0,4).map(o => `<div class="cal-dot ${o.status}"></div>`).join('');
+        html += `
+          <div class="cal-cell ${isToday ? 'today' : ''}" onclick="selectCalDay('${dateStr}')">
+            <div class="day-num">${d}</div>
+            <div class="cal-dots">${dots}</div>
+          </div>`;
+      }
+      document.getElementById('calGrid').innerHTML = html;
+      document.getElementById('calDayOrders').classList.remove('visible');
+    }
+
+    function changeMonth(dir) {
+      calMonth += dir;
+      if (calMonth < 0)  { calMonth = 11; calYear--; }
+      if (calMonth > 11) { calMonth = 0;  calYear++; }
+      renderCalendar();
+    }
+
+    function selectCalDay(dateStr) {
+      const dayOrders = orders.filter(o => o.desiredDate === dateStr);
+      const section = document.getElementById('calDayOrders');
+      const [y, m, d] = dateStr.split('-');
+      document.getElementById('calDayTitle').textContent = `${y}년 ${parseInt(m)}월 ${parseInt(d)}일 주문 (${dayOrders.length}건)`;
+
+      const list = document.getElementById('calDayList');
+      if (dayOrders.length === 0) {
+        list.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>이 날 주문이 없어요</p></div>`;
+      } else {
+        list.innerHTML = dayOrders.map(o => `
+          <div class="order-card" onclick="openModal(${o.id})">
+            <div class="order-card-top">
+              <div>
+                <div class="customer-name">${o.customerName}</div>
+                <div class="customer-phone">${o.phone}</div>
+              </div>
+              <span class="status-badge ${o.status}">${STATUS_LABEL[o.status]}</span>
+            </div>
+            <div class="order-info">
+              <div class="info-row"><span class="info-key">제품</span><span class="info-val">${o.product}</span></div>
+              <div class="info-row"><span class="info-key">수량</span><span class="info-val">${o.quantity}</span></div>
+            </div>
+          </div>
+        `).join('');
+      }
+      section.classList.add('visible');
+      setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+
+    // ── 모달 ──
+    function openModal(id) {
+      const o = orders.find(x => x.id === id);
+      if (!o) return;
+      currentOrderId = id;
+
+      document.getElementById('modalTitle').textContent = `${o.customerName} 주문`;
+      document.getElementById('modalFields').innerHTML = `
+        <div class="modal-field"><span class="modal-field-key">고객명</span><span class="modal-field-val">${o.customerName}</span></div>
+        <div class="modal-field"><span class="modal-field-key">연락처</span><span class="modal-field-val">${o.phone}</span></div>
+        <div class="modal-field"><span class="modal-field-key">제품명</span><span class="modal-field-val">${o.product}</span></div>
+        <div class="modal-field"><span class="modal-field-key">구성</span><span class="modal-field-val">${o.composition}</span></div>
+        <div class="modal-field"><span class="modal-field-key">수량</span><span class="modal-field-val">${o.quantity}</span></div>
+        <div class="modal-field"><span class="modal-field-key">받는날짜</span><span class="modal-field-val">${formatDate(o.desiredDate)}</span></div>
+        <div class="modal-field"><span class="modal-field-key">비고</span><span class="modal-field-val">${o.notes || '-'}</span></div>
+        <div class="modal-field"><span class="modal-field-key">고객확인</span><span class="modal-field-val" style="color:${o.customerConfirmed ? '#10b981' : '#f59e0b'}">${o.customerConfirmed ? '확인 완료' : '미확인'}</span></div>
+      `;
+
+      // 상태 버튼 활성화
+      document.querySelectorAll('.status-change-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.classList.contains(o.status));
+      });
+
+      document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal(e) {
+      if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
+    }
+    function closeModalDirect() {
+      document.getElementById('modalOverlay').classList.remove('open');
+      currentOrderId = null;
+    }
+
+    function changeStatus(status) {
+      if (!currentOrderId) return;
+      const o = orders.find(x => x.id === currentOrderId);
+      if (!o) return;
+      o.status = status;
+      document.querySelectorAll('.status-change-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.classList.contains(status));
+      });
+      updateStats();
+      renderList();
+      renderCalendar();
+    }
+
+    function deleteOrder() {
+      if (!currentOrderId) return;
+      if (!confirm('이 주문을 삭제할까요?')) return;
+      orders = orders.filter(o => o.id !== currentOrderId);
+      closeModalDirect();
+      updateStats();
+      renderList();
+      renderCalendar();
+    }
+
+    // ── 날짜 포맷 ──
+    function formatDate(str) {
+      if (!str) return '-';
+      const [y, m, d] = str.split('-');
+      return `${y}.${m}.${d}`;
+    }
+
+    // ── 초기 렌더 ──
+    updateStats();
+    renderList();
+  </script>
+</body>
+</html>

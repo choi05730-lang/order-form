@@ -1,0 +1,16 @@
+{
+  "name": "order-form",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@google/generative-ai": "^0.24.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "vercel": "^51.4.0"
+  }
+}

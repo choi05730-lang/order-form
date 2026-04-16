@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>답례품 주문 확인서</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      padding: 20px 16px 60px;
+      color: #1a1a2e;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #3b1f8c;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 24px;
+    }
+
+    /* ── 입력 영역 ── */
+    .paste-section {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+
+    .paste-section label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #3b1f8c;
+    }
+
+    textarea {
+      width: 100%;
+      height: 160px;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color .2s;
+      font-family: inherit;
+      color: #333;
+    }
+    textarea:focus { border-color: #7c4dff; }
+
+    .btn-parse {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      padding: 13px;
+      background: linear-gradient(135deg, #7c4dff, #3b1f8c);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn-parse:hover { opacity: .88; }
+
+    /* ── 주문서 카드 ── */
+    .order-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 22px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+      display: none;
+    }
+    .order-card.visible { display: block; }
+
+    .order-card h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #3b1f8c;
+      border-bottom: 2px solid #ede7ff;
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+    }
+
+    .field-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 14px;
+    }
+    .field-row:last-child { border-bottom: none; }
+
+    .field-key {
+      flex: 0 0 90px;
+      color: #888;
+      font-size: 13px;
+      padding-top: 1px;
+    }
+
+    .field-val {
+      flex: 1;
+      font-weight: 600;
+      color: #1a1a2e;
+      word-break: break-all;
+    }
+
+    .field-val.price {
+      color: #e53935;
+      font-size: 16px;
+    }
+
+    /* ── 확인 체크박스 ── */
+    .confirm-section {
+      background: #fff;
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+      display: none;
+    }
+    .confirm-section.visible { display: block; }
+
+    .confirm-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .confirm-label input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      accent-color: #7c4dff;
+      cursor: pointer;
+    }
+
+    /* ── 결제 영역 ── */
+    .payment-section {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      display: none;
+    }
+    .payment-section.visible { display: block; }
+
+    .payment-section h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #3b1f8c;
+      margin-bottom: 14px;
+    }
+
+    .account-box {
+      background: #f7f4ff;
+      border: 1.5px dashed #b39ddb;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .account-line {
+      font-size: 14px;
+      color: #444;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .account-line span:last-child { font-weight: 700; color: #1a1a2e; }
+
+    .account-number-display {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: #3b1f8c;
+      letter-spacing: 1px;
+      margin: 12px 0 6px;
+    }
+
+    .btn-copy {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      background: #fff;
+      color: #7c4dff;
+      font-size: 15px;
+      font-weight: 700;
+      border: 2px solid #7c4dff;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-copy:hover { background: #7c4dff; color: #fff; }
+    .btn-copy.copied { background: #43a047; color: #fff; border-color: #43a047; }
+
+    .notice {
+      font-size: 12px;
+      color: #999;
+      text-align: center;
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+
+    /* ── 토스트 ── */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #333;
+      color: #fff;
+      padding: 11px 22px;
+      border-radius: 50px;
+      font-size: 14px;
+      opacity: 0;
+      transition: all .3s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎁 답례품 주문 확인서</h1>
+  <p class="subtitle">카카오톡 상담 내용을 붙여넣으면 자동으로 정리됩니다</p>
+
+  <!-- 붙여넣기 영역 -->
+  <div class="paste-section">
+    <label>📋 카카오톡 상담 내용 붙여넣기</label>
+    <textarea id="chatInput" placeholder="카카오톡 상담 내용을 여기에 붙여넣어 주세요.
+
+예시)
+주문자명: 홍길동
+연락처: 010-1234-5678
+받는분: 김철수
+받는분 연락처: 010-9876-5432
+배송지: 서울시 강남구 테헤란로 123
+상품명: 꿀 선물세트
+수량: 10개
+메시지: 감사합니다
+결제금액: 150,000원"></textarea>
+    <button class="btn-parse" onclick="parseChat()">주문서 만들기</button>
+  </div>
+
+  <!-- 주문 내용 카드 -->
+  <div class="order-card" id="orderCard">
+    <h2>📝 주문 내용</h2>
+    <div id="orderFields"></div>
+  </div>
+
+  <!-- 확인 체크 -->
+  <div class="confirm-section" id="confirmSection">
+    <label class="confirm-label">
+      <input type="checkbox" id="confirmCheck" onchange="onConfirmChange()" />
+      위의 주문 내용을 확인했으며, 이대로 주문 진행에 동의합니다.
+    </label>
+  </div>
+
+  <!-- 결제 계좌 -->
+  <div class="payment-section" id="paymentSection">
+    <h2>💳 입금 계좌</h2>
+    <div class="account-box">
+      <div class="account-line"><span>은행</span><span id="bankName">카카오뱅크</span></div>
+      <div class="account-line"><span>예금주</span><span id="accountHolder">홍길동</span></div>
+      <div class="account-number-display" id="accountNumber">3333-01-1234567</div>
+    </div>
+    <button class="btn-copy" id="copyBtn" onclick="copyAccount()">계좌번호 복사하기</button>
+    <p class="notice">
+      입금 확인 후 주문이 확정됩니다.<br />
+      입금자명을 <strong>주문자명</strong>과 동일하게 해주세요.
+    </p>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ───────────────────────────────────────────
+    // ★ 계좌 정보 여기서 수정하세요
+    const BANK_NAME    = '카카오뱅크';
+    const ACCOUNT_NO   = '3333-01-1234567';
+    const ACCOUNT_NAME = '홍길동';
+    // ───────────────────────────────────────────
+
+    document.getElementById('bankName').textContent      = BANK_NAME;
+    document.getElementById('accountNumber').textContent = ACCOUNT_NO;
+    document.getElementById('accountHolder').textContent = ACCOUNT_NAME;
+
+    // 파싱 키 매핑 (카카오톡 상담에서 자주 쓰는 표현 → 표시 라벨)
+    const KEY_MAP = [
+      { keys: ['주문자명', '주문자', '이름', '성함'],           label: '주문자명' },
+      { keys: ['연락처', '전화번호', '휴대폰', '핸드폰', '전화'],label: '연락처' },
+      { keys: ['받는분', '수령인', '받으시는분', '수취인'],      label: '받는 분' },
+      { keys: ['받는분 연락처', '수령인 연락처', '받는분연락처'],label: '받는 분 연락처' },
+      { keys: ['배송지', '주소', '배송 주소', '받을주소'],       label: '배송지' },
+      { keys: ['상품명', '상품', '품목', '선물'],                label: '상품명' },
+      { keys: ['수량', '개수', '갯수'],                          label: '수량' },
+      { keys: ['메시지', '카드메시지', '요청사항', '메모', '기타요청'], label: '메시지' },
+      { keys: ['결제금액', '금액', '총금액', '주문금액', '합계'], label: '결제금액', isPrice: true },
+    ];
+
+    function parseChat() {
+      const raw = document.getElementById('chatInput').value.trim();
+      if (!raw) { showToast('상담 내용을 먼저 붙여넣어 주세요.'); return; }
+
+      const result = {};
+
+      // 줄 단위로 분석 — "키: 값" 패턴 추출
+      const lines = raw.split('\n');
+      lines.forEach(line => {
+        // 콜론 또는 | 로 구분된 패턴
+        const match = line.match(/^([^:：|]+)[：:|\s]\s*(.+)$/);
+        if (!match) return;
+
+        const rawKey = match[1].trim();
+        const val    = match[2].trim();
+
+        KEY_MAP.forEach(({ keys, label }) => {
+          if (keys.some(k => rawKey.includes(k))) {
+            result[label] = val;
+          }
+        });
+      });
+
+      // 결과 없으면 안내
+      if (Object.keys(result).length === 0) {
+        showToast('주문 정보를 찾지 못했어요. 형식을 확인해 주세요.');
+        return;
+      }
+
+      renderOrder(result);
+    }
+
+    function renderOrder(data) {
+      const container = document.getElementById('orderFields');
+      container.innerHTML = '';
+
+      KEY_MAP.forEach(({ label, isPrice }) => {
+        if (!data[label]) return;
+        const row = document.createElement('div');
+        row.className = 'field-row';
+        row.innerHTML = `
+          <span class="field-key">${label}</span>
+          <span class="field-val ${isPrice ? 'price' : ''}">${data[label]}</span>
+        `;
+        container.appendChild(row);
+      });
+
+      document.getElementById('orderCard').classList.add('visible');
+      document.getElementById('confirmSection').classList.add('visible');
+      document.getElementById('confirmCheck').checked = false;
+      document.getElementById('paymentSection').classList.remove('visible');
+
+      // 스크롤
+      setTimeout(() => {
+        document.getElementById('orderCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+
+    function onConfirmChange() {
+      const checked = document.getElementById('confirmCheck').checked;
+      const paySection = document.getElementById('paymentSection');
+      if (checked) {
+        paySection.classList.add('visible');
+        setTimeout(() => {
+          paySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      } else {
+        paySection.classList.remove('visible');
+      }
+    }
+
+    function copyAccount() {
+      navigator.clipboard.writeText(ACCOUNT_NO).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = '✓ 복사 완료!';
+        btn.classList.add('copied');
+        showToast(`${ACCOUNT_NO} 복사됨`);
+        setTimeout(() => {
+          btn.textContent = '계좌번호 복사하기';
+          btn.classList.remove('copied');
+        }, 2500);
+      }).catch(() => {
+        // 클립보드 API 미지원 fallback
+        const el = document.createElement('textarea');
+        el.value = ACCOUNT_NO;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        showToast(`${ACCOUNT_NO} 복사됨`);
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2400);
+    }
+  </script>
+</body>
+</html>
