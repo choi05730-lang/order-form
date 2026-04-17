@@ -19,12 +19,12 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'PATCH') {
-    const { id, status } = req.body;
-    if (!id || !status) return res.status(400).json({ error: 'id, status 필요' });
+    const { id, ...fields } = req.body;
+    if (!id) return res.status(400).json({ error: 'id 필요' });
 
     const { error } = await supabase
       .from('orders')
-      .update({ status })
+      .update(fields)
       .eq('id', id);
 
     if (error) return res.status(500).json({ error: error.message });

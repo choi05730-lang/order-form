@@ -405,6 +405,60 @@
       margin-top: 8px;
     }
 
+    /* ── 수정 버튼 ── */
+    .btn-edit {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      background: #EEF2FF;
+      color: #4F46E5;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .btn-save {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .btn-cancel-edit {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      background: #f0f0f0;
+      color: var(--sub);
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .edit-form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .edit-group { display: flex; flex-direction: column; gap: 5px; }
+    .edit-group label { font-size: 12px; font-weight: 700; color: var(--sub); }
+    .edit-input {
+      padding: 11px 14px;
+      background: #f5f5f5;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      outline: none;
+    }
+    .edit-input:focus { background: #efefef; }
+
     /* 빈 상태 */
     .empty-state {
       text-align: center;
@@ -489,14 +543,35 @@
         <h2 id="modalTitle">주문 상세</h2>
         <button class="modal-close" onclick="closeModalDirect()">✕</button>
       </div>
-      <div class="modal-fields" id="modalFields"></div>
-      <div class="status-buttons">
-        <h3>상태 변경</h3>
-        <button class="status-change-btn pending"   data-status="입금대기" onclick="changeStatus('입금대기')">입금대기</button>
-        <button class="status-change-btn paid"      data-status="입금확인" onclick="changeStatus('입금확인')">입금확인</button>
-        <button class="status-change-btn completed" data-status="완료"    onclick="changeStatus('완료')">완료</button>
+      <!-- 상세 보기 -->
+      <div id="modalView">
+        <div class="modal-fields" id="modalFields"></div>
+        <div class="status-buttons">
+          <h3>상태 변경</h3>
+          <button class="status-change-btn pending"   data-status="입금대기" onclick="changeStatus('입금대기')">입금대기</button>
+          <button class="status-change-btn paid"      data-status="입금확인" onclick="changeStatus('입금확인')">입금확인</button>
+          <button class="status-change-btn completed" data-status="완료"    onclick="changeStatus('완료')">완료</button>
+        </div>
+        <button class="btn-edit" onclick="openEditMode()">✏️ 주문 수정</button>
+        <button class="btn-delete" onclick="deleteOrder()">주문 삭제</button>
       </div>
-      <button class="btn-delete" onclick="deleteOrder()">주문 삭제</button>
+
+      <!-- 수정 모드 -->
+      <div id="modalEdit" style="display:none;">
+        <div class="edit-form">
+          <div class="edit-group"><label>고객명</label><input class="edit-input" id="edit_customer_name" /></div>
+          <div class="edit-group"><label>연락처</label><input class="edit-input" id="edit_customer_phone" /></div>
+          <div class="edit-group"><label>제품명</label><input class="edit-input" id="edit_product" /></div>
+          <div class="edit-group"><label>종류</label><input class="edit-input" id="edit_types" /></div>
+          <div class="edit-group"><label>수량</label><input class="edit-input" id="edit_quantity" /></div>
+          <div class="edit-group"><label>가격</label><input class="edit-input" id="edit_price" /></div>
+          <div class="edit-group"><label>날짜</label><input class="edit-input" id="edit_desired_date" type="date" /></div>
+          <div class="edit-group"><label>비고</label><input class="edit-input" id="edit_note" /></div>
+          <div class="edit-group"><label>주소</label><input class="edit-input" id="edit_address" /></div>
+        </div>
+        <button class="btn-save" onclick="saveEdit()">저장하기</button>
+        <button class="btn-cancel-edit" onclick="closeEditMode()">취소</button>
+      </div>
     </div>
   </div>
 
@@ -700,7 +775,68 @@
     }
     function closeModalDirect() {
       document.getElementById('modalOverlay').classList.remove('open');
+      closeEditMode();
       currentOrderId = null;
+    }
+
+    function openEditMode() {
+      const o = orders.find(x => x.id === currentOrderId);
+      if (!o) return;
+      document.getElementById('edit_customer_name').value  = o.customer_name || '';
+      document.getElementById('edit_customer_phone').value = o.customer_phone || '';
+      document.getElementById('edit_product').value        = o.product || '';
+      document.getElementById('edit_types').value          = o.types || '';
+      document.getElementById('edit_quantity').value       = o.quantity || '';
+      document.getElementById('edit_price').value          = o.price || '';
+      document.getElementById('edit_desired_date').value   = o.desired_date || '';
+      document.getElementById('edit_note').value           = o.note || '';
+      document.getElementById('edit_address').value        = o.address || '';
+      document.getElementById('modalView').style.display = 'none';
+      document.getElementById('modalEdit').style.display = 'block';
+    }
+
+    function closeEditMode() {
+      document.getElementById('modalView').style.display = 'block';
+      document.getElementById('modalEdit').style.display = 'none';
+    }
+
+    async function saveEdit() {
+      const btn = document.querySelector('.btn-save');
+      btn.textContent = '저장 중...';
+      btn.disabled = true;
+
+      const updated = {
+        id:             currentOrderId,
+        customer_name:  document.getElementById('edit_customer_name').value.trim(),
+        customer_phone: document.getElementById('edit_customer_phone').value.trim(),
+        product:        document.getElementById('edit_product').value.trim(),
+        types:          document.getElementById('edit_types').value.trim(),
+        quantity:       document.getElementById('edit_quantity').value.trim(),
+        price:          document.getElementById('edit_price').value.trim(),
+        desired_date:   document.getElementById('edit_desired_date').value || null,
+        note:           document.getElementById('edit_note').value.trim(),
+        address:        document.getElementById('edit_address').value.trim(),
+      };
+
+      const res = await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      });
+
+      if (res.ok) {
+        const o = orders.find(x => x.id === currentOrderId);
+        if (o) Object.assign(o, updated);
+        closeEditMode();
+        openModal(currentOrderId);
+        updateStats();
+        renderList();
+      } else {
+        alert('저장 실패');
+      }
+
+      btn.textContent = '저장하기';
+      btn.disabled = false;
     }
 
     // ── 날짜 포맷 ──
