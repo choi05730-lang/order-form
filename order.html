@@ -635,7 +635,7 @@
       goToStep(2);
     }
 
-    function submitOrder() {
+    async function submitOrder() {
       const name  = document.getElementById('customerName').value.trim();
       const phone = document.getElementById('customerPhone').value.trim();
       if (!name)             { showToast('고객명을 입력해주세요.'); return; }
@@ -648,9 +648,25 @@
         parsedOrder.address = detail ? `${addr} ${detail}` : addr;
       }
 
-      const orderData = { ...parsedOrder, customerName: name, customerPhone: phone };
-      console.log('주문 데이터:', orderData);
-      // TODO: Supabase 저장
+      const orderData = {
+        ...parsedOrder,
+        customer_name: name,
+        customer_phone: phone,
+      };
+
+      try {
+        const res = await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || '저장 실패');
+      } catch(e) {
+        showToast('주문 저장 중 오류가 발생했어요: ' + e.message);
+        return;
+      }
+
       goToStep(4);
     }
 

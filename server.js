@@ -11,13 +11,15 @@ if (fs.existsSync(envFile)) {
   });
 }
 
-const parseHandler = require('./api/parse');
+const parseHandler  = require('./api/parse');
+const submitHandler = require('./api/submit');
 
 const app = express();
 app.use(express.json());
-app.use(express.static(__dirname)); // HTML 파일 서빙
+app.use(express.static(__dirname));
 
-app.post('/api/parse', (req, res) => parseHandler(req, res));
+app.post('/api/parse',  (req, res) => parseHandler(req, res));
+app.post('/api/submit', (req, res) => submitHandler(req, res));
 
 const PORT = 3000;
 app.listen(PORT, () => {
