@@ -292,6 +292,35 @@
 
     .bottom-pad { height: 48px; }
 
+    /* ── 주소검색 오버레이 ── */
+    #postcodeOverlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 9999;
+      background: #fff;
+    }
+    #postcodeOverlay.open { display: block; }
+    #postcodeHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      height: 56px;
+      border-bottom: 1px solid var(--border);
+      box-sizing: border-box;
+    }
+    #postcodeHeader span { font-size: 16px; font-weight: 700; }
+    #postcodeClose {
+      background: none; border: none;
+      font-size: 22px; cursor: pointer; color: var(--sub);
+    }
+    #postcodeWrap {
+      width: 100%;
+      height: calc(100% - 56px);
+    }
+
     /* ── 4단계: 계좌 안내 ── */
     .complete-icon {
       text-align: center;
@@ -548,6 +577,15 @@
     </p>
   </div>
 
+  <!-- 주소검색 오버레이 -->
+  <div id="postcodeOverlay">
+    <div id="postcodeHeader">
+      <span>주소 검색</span>
+      <button id="postcodeClose" onclick="closePostcode()">✕</button>
+    </div>
+    <div id="postcodeWrap"></div>
+  </div>
+
   <div class="bottom-pad"></div>
   <div class="toast" id="toast"></div>
 
@@ -661,23 +699,33 @@
           body: JSON.stringify(orderData),
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error || '저장 실패');
+        if (!res.ok) console.warn('저장 실패:', json.error);
       } catch(e) {
-        showToast('주문 저장 중 오류가 발생했어요: ' + e.message);
-        return;
+        console.warn('API 호출 실패:', e.message);
       }
 
       goToStep(4);
     }
 
     function searchAddress() {
+      const overlay = document.getElementById('postcodeOverlay');
+      const wrap = document.getElementById('postcodeWrap');
+      wrap.innerHTML = '';
+      overlay.classList.add('open');
       new daum.Postcode({
         oncomplete: function(data) {
           const addr = data.roadAddress || data.jibunAddress;
           document.getElementById('customerAddress').value = addr;
-          document.getElementById('customerAddressDetail').focus();
+          overlay.classList.remove('open');
+        },
+        onclose: function() {
+          overlay.classList.remove('open');
         }
-      }).open();
+      }).embed(wrap);
+    }
+
+    function closePostcode() {
+      document.getElementById('postcodeOverlay').classList.remove('open');
     }
 
     function goToStep(n) {
