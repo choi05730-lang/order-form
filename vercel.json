@@ -8,6 +8,7 @@
   "routes": [
     { "src": "/api/parse", "dest": "/api/parse.js" },
     { "src": "/api/submit", "dest": "/api/submit.js" },
+    { "handle": "filesystem" },
     { "src": "/order", "dest": "/order.html" },
     { "src": "/dashboard", "dest": "/dashboard.html" },
     { "src": "/(.*)", "dest": "/index.html" }
