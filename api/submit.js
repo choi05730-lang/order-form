@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
 
   const {
     product, types, quantity, price, note,
-    delivery, address,
+    desired_date, delivery, address,
     customer_name, customer_phone,
   } = req.body;
 
@@ -24,6 +24,7 @@ module.exports = async function handler(req, res) {
     .from('orders')
     .insert([{
       product, types, quantity, price, note,
+      desired_date: desired_date || null,
       delivery, address,
       customer_name, customer_phone,
       status: '입금대기',

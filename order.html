@@ -438,6 +438,11 @@
       </div>
 
       <div class="input-group">
+        <label>날짜 <span class="req">*</span></label>
+        <input class="input-field" id="inputDate" type="date" />
+      </div>
+
+      <div class="input-group">
         <label>수령 방법 <span class="req">*</span></label>
         <div class="delivery-toggle">
           <button class="delivery-btn active" id="btnPickup" onclick="setDelivery('pickup')">🏪 매장 픽업</button>
@@ -485,6 +490,10 @@
       <div class="field-row">
         <span class="field-key">비고</span>
         <span class="field-val" id="fieldNote"></span>
+      </div>
+      <div class="field-row">
+        <span class="field-key">날짜</span>
+        <span class="field-val" id="fieldDate"></span>
       </div>
       <div class="field-row">
         <span class="field-key">수령 방법</span>
@@ -595,7 +604,7 @@
     const BANK_HOLDER  = '최은희';
     const BANK_NUMBER  = '01025511407';
 
-    let parsedOrder = { product: '', types: '', quantity: '', price: '', note: '', delivery: 'pickup', address: '' };
+    let parsedOrder = { product: '', types: '', quantity: '', price: '', note: '', desired_date: '', delivery: 'pickup', address: '' };
     let deliveryMode = 'pickup';
 
     function setDelivery(mode) {
@@ -618,15 +627,17 @@
     }
 
     function goToSummary() {
-      const product  = document.getElementById('inputProduct').value.trim();
-      const types    = document.getElementById('inputTypes').value.trim();
-      const quantity = document.getElementById('inputQuantity').value.trim();
-      const price    = document.getElementById('inputPrice').value.trim();
-      const note     = document.getElementById('inputNote').value.trim();
-      if (!product) { showToast('제품명을 입력해주세요.'); return; }
-      if (!price)   { showToast('가격을 입력해주세요.'); return; }
+      const product      = document.getElementById('inputProduct').value.trim();
+      const types        = document.getElementById('inputTypes').value.trim();
+      const quantity     = document.getElementById('inputQuantity').value.trim();
+      const price        = document.getElementById('inputPrice').value.trim();
+      const note         = document.getElementById('inputNote').value.trim();
+      const desired_date = document.getElementById('inputDate').value;
+      if (!product)      { showToast('제품명을 입력해주세요.'); return; }
+      if (!price)        { showToast('가격을 입력해주세요.'); return; }
+      if (!desired_date) { showToast('날짜를 입력해주세요.'); return; }
 
-      parsedOrder = { product, types, quantity, price, note, delivery: deliveryMode, address: '' };
+      parsedOrder = { product, types, quantity, price, note, desired_date, delivery: deliveryMode, address: '' };
       renderOrderFields(parsedOrder);
 
       const encoded = btoa(encodeURIComponent(JSON.stringify(parsedOrder)));
@@ -647,6 +658,7 @@
       set('fieldQuantity', data.quantity);
       set('fieldPrice',    data.price);
       set('fieldNote',     data.note);
+      set('fieldDate',     data.desired_date ? data.desired_date.replace(/-/g, '.') : '');
       set('fieldDelivery', data.delivery === 'delivery' ? '📦 택배' : '🏪 매장 픽업');
       const addrRow = document.getElementById('fieldAddressRow');
       if (data.delivery === 'delivery') {
@@ -771,6 +783,7 @@
         { key: '구움과자 종류', val: parsedOrder.types },
         { key: '박스 갯수',    val: parsedOrder.quantity },
         { key: '가격',         val: parsedOrder.price },
+        { key: '날짜',         val: parsedOrder.desired_date ? parsedOrder.desired_date.replace(/-/g, '.') : '' },
         { key: '비고',         val: parsedOrder.note },
         { key: '수령 방법',    val: parsedOrder.delivery === 'delivery' ? '📦 택배' : '🏪 매장 픽업' },
       ];
