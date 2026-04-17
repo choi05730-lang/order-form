@@ -1,5 +1,15 @@
 {
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" }
+  "version": 2,
+  "builds": [
+    { "src": "api/parse.js", "use": "@vercel/node" },
+    { "src": "api/submit.js", "use": "@vercel/node" },
+    { "src": "*.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/parse", "dest": "/api/parse.js" },
+    { "src": "/api/submit", "dest": "/api/submit.js" },
+    { "src": "/order", "dest": "/order.html" },
+    { "src": "/dashboard", "dest": "/dashboard.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
