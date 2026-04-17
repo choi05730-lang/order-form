@@ -683,6 +683,7 @@
         <div class="modal-field"><span class="modal-field-key">가격</span><span class="modal-field-val">${o.price || '-'}</span></div>
         <div class="modal-field"><span class="modal-field-key">수령방법</span><span class="modal-field-val">${o.delivery === 'delivery' ? '📦 택배' : '🏪 매장 픽업'}</span></div>
         ${o.address ? `<div class="modal-field"><span class="modal-field-key">주소</span><span class="modal-field-val">${o.address}</span></div>` : ''}
+        ${o.image_url ? `<div class="modal-field" style="flex-direction:column;gap:8px;"><span class="modal-field-key">사진</span><img src="${o.image_url}" style="width:100%;border-radius:10px;object-fit:cover;max-height:200px;" /></div>` : ''}
         <div class="modal-field"><span class="modal-field-key">날짜</span><span class="modal-field-val">${o.desired_date ? o.desired_date.replace(/-/g,'.') : '-'}</span></div>
         <div class="modal-field"><span class="modal-field-key">비고</span><span class="modal-field-val">${o.note || '-'}</span></div>
         <div class="modal-field"><span class="modal-field-key">주문일시</span><span class="modal-field-val">${formatDate(o.created_at)}</span></div>

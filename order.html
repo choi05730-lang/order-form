@@ -433,13 +433,26 @@
         <input class="input-field" id="inputPrice" type="text" placeholder="예) 274,000원" />
       </div>
       <div class="input-group">
-        <label>비고</label>
+        <label>날짜 <span class="req">*</span></label>
+        <input class="input-field" id="inputDate" type="date" />
+      </div>
+
+      <div class="input-group">
+        <label>비고 <span style="color:var(--sub);font-weight:400;">(선택)</span></label>
         <input class="input-field" id="inputNote" type="text" placeholder="예) 스티커 포함 등" />
       </div>
 
       <div class="input-group">
-        <label>날짜 <span class="req">*</span></label>
-        <input class="input-field" id="inputDate" type="date" />
+        <label>사진 <span style="color:var(--sub);font-weight:400;">(선택)</span></label>
+        <input type="file" id="inputImage" accept="image/*" style="display:none;" onchange="previewImage(this)" />
+        <div id="imageUploadBox" onclick="document.getElementById('inputImage').click()"
+          style="width:100%;min-height:100px;background:var(--input-bg);border-radius:10px;
+                 display:flex;flex-direction:column;align-items:center;justify-content:center;
+                 cursor:pointer;gap:6px;padding:16px;box-sizing:border-box;">
+          <div style="font-size:28px;">📷</div>
+          <div style="font-size:13px;color:var(--sub);">탭하여 사진 추가</div>
+        </div>
+        <div id="imageStatus" style="font-size:12px;margin-top:6px;color:var(--sub);display:none;"></div>
       </div>
 
       <div class="input-group">
@@ -604,8 +617,44 @@
     const BANK_HOLDER  = '최은희';
     const BANK_NUMBER  = '01025511407';
 
-    let parsedOrder = { product: '', types: '', quantity: '', price: '', note: '', desired_date: '', delivery: 'pickup', address: '' };
+    let parsedOrder = { product: '', types: '', quantity: '', price: '', note: '', desired_date: '', delivery: 'pickup', address: '', image_url: '' };
+    let uploadedImageUrl = '';
     let deliveryMode = 'pickup';
+
+    function previewImage(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const box = document.getElementById('imageUploadBox');
+      const status = document.getElementById('imageStatus');
+      const reader = new FileReader();
+
+      reader.onload = async function(e) {
+        const base64 = e.target.result.split(',')[1];
+        box.innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:200px;border-radius:8px;object-fit:cover;" />`;
+        status.style.display = 'block';
+        status.style.color = 'var(--sub)';
+        status.textContent = '업로드 중...';
+
+        try {
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ base64, filename: file.name, contentType: file.type }),
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error);
+          uploadedImageUrl = json.url;
+          status.style.color = '#10b981';
+          status.textContent = '✓ 사진 업로드 완료';
+        } catch(e) {
+          status.style.color = '#ef4444';
+          status.textContent = '업로드 실패: ' + e.message;
+          uploadedImageUrl = '';
+        }
+      };
+      reader.readAsDataURL(file);
+    }
 
     function setDelivery(mode) {
       deliveryMode = mode;
@@ -637,7 +686,7 @@
       if (!price)        { showToast('가격을 입력해주세요.'); return; }
       if (!desired_date) { showToast('날짜를 입력해주세요.'); return; }
 
-      parsedOrder = { product, types, quantity, price, note, desired_date, delivery: deliveryMode, address: '' };
+      parsedOrder = { product, types, quantity, price, note, desired_date, delivery: deliveryMode, address: '', image_url: uploadedImageUrl };
       renderOrderFields(parsedOrder);
 
       const encoded = btoa(encodeURIComponent(JSON.stringify(parsedOrder)));
