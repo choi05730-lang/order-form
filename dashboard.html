@@ -624,7 +624,7 @@
 
       const ordersByDate = {};
       orders.forEach(o => {
-        const d = o.created_at ? o.created_at.slice(0, 10) : null;
+        const d = o.desired_date ? o.desired_date.slice(0, 10) : null;
         if (!d) return;
         if (!ordersByDate[d]) ordersByDate[d] = [];
         ordersByDate[d].push(o);
@@ -654,7 +654,7 @@
     }
 
     function selectCalDay(dateStr) {
-      const dayOrders = orders.filter(o => o.created_at && o.created_at.slice(0,10) === dateStr);
+      const dayOrders = orders.filter(o => o.desired_date && o.desired_date.slice(0,10) === dateStr);
       const section = document.getElementById('calDayOrders');
       const [y, m, d] = dateStr.split('-');
       document.getElementById('calDayTitle').textContent = `${y}년 ${parseInt(m)}월 ${parseInt(d)}일 주문 (${dayOrders.length}건)`;
