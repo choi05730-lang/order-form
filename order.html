@@ -663,10 +663,23 @@
       document.getElementById('addressGroup').style.display = mode === 'delivery' ? 'block' : 'none';
     }
 
-    function init() {
+    async function init() {
       const params = new URLSearchParams(window.location.search);
+      const code = params.get('c');
       const dataParam = params.get('d');
-      if (dataParam) {
+
+      if (code) {
+        try {
+          const url = `https://orvwmmrqyqgbjcyiqqqr.supabase.co/storage/v1/object/public/order-links/${code}.json`;
+          const res = await fetch(url);
+          parsedOrder = await res.json();
+        } catch(e) {
+          parsedOrder = { product:'', types:'', quantity:'', price:'', note:'' };
+        }
+        renderOrderFields(parsedOrder);
+        document.getElementById('step1').style.display = 'none';
+        goToStep(2);
+      } else if (dataParam) {
         try { parsedOrder = JSON.parse(decodeURIComponent(atob(dataParam))); }
         catch(e) { parsedOrder = { product:'', types:'', quantity:'', price:'', note:'' }; }
         renderOrderFields(parsedOrder);
@@ -675,7 +688,7 @@
       }
     }
 
-    function goToSummary() {
+    async function goToSummary() {
       const product      = document.getElementById('inputProduct').value.trim();
       const types        = document.getElementById('inputTypes').value.trim();
       const quantity     = document.getElementById('inputQuantity').value.trim();
@@ -689,11 +702,28 @@
       parsedOrder = { product, types, quantity, price, note, desired_date, delivery: deliveryMode, address: '', image_url: uploadedImageUrl };
       renderOrderFields(parsedOrder);
 
-      const encoded = btoa(encodeURIComponent(JSON.stringify(parsedOrder)));
-      const url = `${location.origin}${location.pathname}?d=${encoded}`;
-      document.getElementById('generatedLink').textContent = url;
-      document.getElementById('linkCard').style.display = 'block';
-      document.getElementById('linkCard').scrollIntoView({ behavior: 'smooth' });
+      const btn = document.querySelector('.btn-primary');
+      btn.disabled = true;
+      btn.textContent = '링크 생성 중...';
+
+      try {
+        const res = await fetch('/api/create-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(parsedOrder),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error);
+        const url = `${location.origin}${location.pathname}?c=${json.code}`;
+        document.getElementById('generatedLink').textContent = url;
+        document.getElementById('linkCard').style.display = 'block';
+        document.getElementById('linkCard').scrollIntoView({ behavior: 'smooth' });
+      } catch(e) {
+        showToast('링크 생성 실패: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '고객 링크 만들기 →';
+      }
     }
 
     function renderOrderFields(data) {
