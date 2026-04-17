@@ -12,7 +12,8 @@ module.exports = async function handler(req, res) {
   if (!base64 || !filename) return res.status(400).json({ error: '파일 정보 필요' });
 
   const buffer = Buffer.from(base64, 'base64');
-  const path = `${Date.now()}_${filename}`;
+  const ext = filename.split('.').pop().replace(/[^a-zA-Z0-9]/g, '') || 'jpg';
+  const path = `${Date.now()}.${ext}`;
 
   const { error } = await supabase.storage
     .from('order-images')
