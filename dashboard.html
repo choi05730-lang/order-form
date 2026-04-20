@@ -275,9 +275,8 @@
       height: 6px;
       border-radius: 50%;
     }
-    .cal-dot.pending   { background: var(--pending); }
-    .cal-dot.paid      { background: var(--paid); }
-    .cal-dot.completed { background: var(--completed); }
+    .cal-dot.daelye { background: #3b82f6; }
+    .cal-dot.naver  { background: #ef4444; }
 
     /* 캘린더 아래 선택된 날짜 주문 */
     .cal-day-orders {
@@ -940,7 +939,10 @@
         const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const isToday = (calYear === today.getFullYear() && calMonth === today.getMonth() && d === today.getDate());
         const dayOrders = ordersByDate[dateStr] || [];
-        const dots = dayOrders.slice(0,4).map(o => `<div class="cal-dot ${STATUS_CLASS[o.status] || 'pending'}"></div>`).join('');
+        const dots = dayOrders.slice(0,4).map(o => {
+          if (o.source === '네이버예약') return `<div class="cal-dot naver"></div>`;
+          return `<div class="cal-dot daelye"></div>`;
+        }).join('');
         html += `<div class="cal-cell ${isToday ? 'today' : ''}" onclick="selectCalDay('${dateStr}')">
           <div class="day-num">${d}</div>
           <div class="cal-dots">${dots}</div>
