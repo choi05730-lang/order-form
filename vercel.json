@@ -6,6 +6,7 @@
     { "src": "api/orders.js", "use": "@vercel/node" },
     { "src": "api/upload.js", "use": "@vercel/node" },
     { "src": "api/create-link.js", "use": "@vercel/node" },
+    { "src": "api/account.js", "use": "@vercel/node" },
     { "src": "*.html", "use": "@vercel/static" }
   ],
   "routes": [
@@ -14,6 +15,7 @@
     { "src": "/api/orders", "dest": "/api/orders.js" },
     { "src": "/api/upload", "dest": "/api/upload.js" },
     { "src": "/api/create-link", "dest": "/api/create-link.js" },
+    { "src": "/api/account", "dest": "/api/account.js" },
     { "handle": "filesystem" },
     { "src": "/order", "dest": "/order.html" },
     { "src": "/dashboard", "dest": "/dashboard.html" },

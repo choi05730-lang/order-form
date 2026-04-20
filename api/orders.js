@@ -6,7 +6,8 @@ const supabase = createClient(
 );
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const allowed = process.env.ALLOWED_ORIGIN || ''
+  if (allowed) res.setHeader('Access-Control-Allow-Origin', allowed);
 
   if (req.method === 'GET') {
     const { data, error } = await supabase

@@ -16,6 +16,7 @@ const submitHandler     = require('./api/submit');
 const ordersHandler     = require('./api/orders');
 const uploadHandler     = require('./api/upload');
 const createLinkHandler = require('./api/create-link');
+const accountHandler    = require('./api/account');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -26,6 +27,7 @@ app.post('/api/submit',      (req, res) => submitHandler(req, res));
 app.all('/api/orders',       (req, res) => ordersHandler(req, res));
 app.post('/api/upload',      (req, res) => uploadHandler(req, res));
 app.post('/api/create-link', (req, res) => createLinkHandler(req, res));
+app.get('/api/account',     (req, res) => accountHandler(req, res));
 
 const PORT = 3000;
 app.listen(PORT, () => {

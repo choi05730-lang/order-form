@@ -300,16 +300,17 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    // ───────────────────────────────────────────
-    // ★ 계좌 정보 여기서 수정하세요
-    const BANK_NAME    = '카카오뱅크';
-    const ACCOUNT_NO   = '3333-01-1234567';
-    const ACCOUNT_NAME = '홍길동';
-    // ───────────────────────────────────────────
+    let ACCOUNT_NO = '';
 
-    document.getElementById('bankName').textContent      = BANK_NAME;
-    document.getElementById('accountNumber').textContent = ACCOUNT_NO;
-    document.getElementById('accountHolder').textContent = ACCOUNT_NAME;
+    fetch('/api/account')
+      .then(r => r.json())
+      .then(({ bankName, accountNo, accountName }) => {
+        ACCOUNT_NO = accountNo;
+        document.getElementById('bankName').textContent      = bankName;
+        document.getElementById('accountNumber').textContent = accountNo;
+        document.getElementById('accountHolder').textContent = accountName;
+      })
+      .catch(() => {});  // 실패 시 빈 값 유지
 
     // 파싱 키 매핑 (카카오톡 상담에서 자주 쓰는 표현 → 표시 라벨)
     const KEY_MAP = [
@@ -340,11 +341,18 @@
         const rawKey = match[1].trim();
         const val    = match[2].trim();
 
+        // 가장 긴 키가 매칭된 항목 우선 (예: "받는분 연락처"가 "받는분"보다 구체적)
+        let bestLabel = null;
+        let bestKeyLen = 0;
         KEY_MAP.forEach(({ keys, label }) => {
-          if (keys.some(k => rawKey.includes(k))) {
-            result[label] = val;
-          }
+          keys.forEach(k => {
+            if (rawKey.includes(k) && k.length > bestKeyLen) {
+              bestLabel = label;
+              bestKeyLen = k.length;
+            }
+          });
         });
+        if (bestLabel) result[bestLabel] = val;
       });
 
       // 결과 없으면 안내
@@ -364,10 +372,14 @@
         if (!data[label]) return;
         const row = document.createElement('div');
         row.className = 'field-row';
-        row.innerHTML = `
-          <span class="field-key">${label}</span>
-          <span class="field-val ${isPrice ? 'price' : ''}">${data[label]}</span>
-        `;
+        const keySpan = document.createElement('span');
+        keySpan.className = 'field-key';
+        keySpan.textContent = label;
+        const valSpan = document.createElement('span');
+        valSpan.className = `field-val${isPrice ? ' price' : ''}`;
+        valSpan.textContent = data[label];
+        row.appendChild(keySpan);
+        row.appendChild(valSpan);
         container.appendChild(row);
       });
 
