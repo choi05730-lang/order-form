@@ -471,6 +471,37 @@
       margin-top: 4px;
     }
 
+    /* ── 생산현황 ── */
+    .production-list { display: flex; flex-direction: column; gap: 10px; }
+    .production-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .production-info { display: flex; flex-direction: column; gap: 4px; }
+    .production-name { font-size: 16px; font-weight: 700; }
+    .production-dates { font-size: 12px; color: var(--sub); }
+    .production-qty {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--primary);
+      min-width: 60px;
+      text-align: right;
+    }
+    .production-qty span { font-size: 14px; font-weight: 600; }
+    .production-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--sub);
+      margin: 16px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
     /* 플로팅 버튼 */
     .fab {
       position: fixed;
@@ -573,6 +604,7 @@
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('list', this)">목록</button>
     <button class="tab-btn"        onclick="switchTab('calendar', this)">캘린더</button>
+    <button class="tab-btn"        onclick="switchTab('production', this)">생산현황</button>
   </div>
 
   <!-- 목록 뷰 -->
@@ -584,6 +616,11 @@
       <button class="filter-btn" onclick="filterOrders('completed', this)">완료</button>
     </div>
     <div class="order-list" id="orderList"></div>
+  </div>
+
+  <!-- 생산현황 뷰 -->
+  <div class="content" id="view-production" style="display:none;">
+    <div id="productionList"></div>
   </div>
 
   <!-- 캘린더 뷰 -->
@@ -769,9 +806,64 @@
     function switchTab(name, btn) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById('view-list').style.display     = name === 'list'     ? 'block' : 'none';
-      document.getElementById('view-calendar').style.display = name === 'calendar' ? 'block' : 'none';
-      if (name === 'calendar') renderCalendar();
+      document.getElementById('view-list').style.display       = name === 'list'       ? 'block' : 'none';
+      document.getElementById('view-calendar').style.display   = name === 'calendar'   ? 'block' : 'none';
+      document.getElementById('view-production').style.display = name === 'production' ? 'block' : 'none';
+      if (name === 'calendar')   renderCalendar();
+      if (name === 'production') renderProduction();
+    }
+
+    // ── 생산현황 ──
+    function renderProduction() {
+      const todayStr = today.toISOString().slice(0, 10);
+      const confirmed = ['입금확인', '결제완료'];
+
+      const filtered = orders.filter(o =>
+        confirmed.includes(o.status) &&
+        o.desired_date && o.desired_date.slice(0, 10) >= todayStr
+      );
+
+      if (filtered.length === 0) {
+        document.getElementById('productionList').innerHTML =
+          `<div class="empty-state"><div class="icon">🎂</div><p>생산 예정 주문이 없어요</p></div>`;
+        return;
+      }
+
+      // product + types 기준으로 그룹화
+      const grouped = {};
+      filtered.forEach(o => {
+        const key = (o.product || '미정') + (o.types ? ' / ' + o.types : '');
+        if (!grouped[key]) grouped[key] = { name: o.product || '미정', types: o.types || '', qty: 0, dates: [] };
+        const qty = parseInt(o.quantity) || 1;
+        grouped[key].qty += qty;
+        const d = o.desired_date.slice(0, 10);
+        if (!grouped[key].dates.includes(d)) grouped[key].dates.push(d);
+      });
+
+      // 가장 빠른 날짜 기준 정렬
+      const sorted = Object.values(grouped).sort((a, b) =>
+        a.dates[0].localeCompare(b.dates[0])
+      );
+
+      const html = sorted.map(item => {
+        const dates = item.dates.sort().map(d => {
+          const [,m,day] = d.split('-');
+          return `${parseInt(m)}/${parseInt(day)}`;
+        }).join(', ');
+        const label = item.name + (item.types ? ` <span style="font-weight:500;color:var(--sub)">${item.types}</span>` : '');
+        return `
+          <div class="production-card">
+            <div class="production-info">
+              <div class="production-name">${label}</div>
+              <div class="production-dates">수령일: ${dates}</div>
+            </div>
+            <div class="production-qty">${item.qty}<span>개</span></div>
+          </div>`;
+      }).join('');
+
+      document.getElementById('productionList').innerHTML =
+        `<div class="production-section-title">확정 주문 · 오늘 이후</div>
+         <div class="production-list">${html}</div>`;
     }
 
     // ── 통계 ──
