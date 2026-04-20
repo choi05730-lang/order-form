@@ -880,7 +880,6 @@
           </div>`;
       }).join('');
 
-      const range = getDateRange();
       const rangeLabel = `${range[0].slice(5).replace('-','/')} ~ ${range[2].slice(5).replace('-','/')}`;
       document.getElementById('productionList').innerHTML =
         `<div class="production-section-title">확정 주문 · ${rangeLabel}</div>
