@@ -469,6 +469,16 @@
       color: #03C75A;
       margin-top: 4px;
     }
+    .store-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #e8f0fe;
+      color: #03adf5;
+      margin-top: 4px;
+    }
 
     /* ── 생산현황 ── */
     .production-list { display: flex; flex-direction: column; gap: 10px; }
@@ -882,7 +892,7 @@
             <div>
               <div class="customer-name">${o.customer_name}</div>
               <div class="customer-phone">${o.customer_phone || ''}</div>
-              ${o.source === '네이버예약' ? '<span class="naver-badge">N 네이버예약</span>' : ''}
+              ${o.source === '네이버예약' ? '<span class="naver-badge">N 네이버예약</span>' : o.source === '스마트스토어' ? '<span class="store-badge">S 스마트스토어</span>' : ''}
             </div>
             <span class="status-badge ${cls}">${o.status}</span>
           </div>
@@ -993,7 +1003,7 @@
         <div class="modal-field"><span class="modal-field-key">날짜</span><span class="modal-field-val">${o.desired_date ? o.desired_date.replace(/-/g,'.') : '-'}</span></div>
         <div class="modal-field"><span class="modal-field-key">비고</span><span class="modal-field-val">${o.note || '-'}</span></div>
         <div class="modal-field"><span class="modal-field-key">주문일시</span><span class="modal-field-val">${formatDate(o.created_at)}</span></div>
-        ${o.source === '네이버예약' ? '<div class="modal-field"><span class="modal-field-key">접수경로</span><span class="modal-field-val"><span class="naver-badge">N 네이버예약</span></span></div>' : ''}
+        ${o.source === '네이버예약' ? '<div class="modal-field"><span class="modal-field-key">접수경로</span><span class="modal-field-val"><span class="naver-badge">N 네이버예약</span></span></div>' : o.source === '스마트스토어' ? '<div class="modal-field"><span class="modal-field-key">접수경로</span><span class="modal-field-val"><span class="store-badge">S 스마트스토어</span></span></div>' : ''}
       `;
 
       document.querySelectorAll('.status-change-btn').forEach(btn => {
