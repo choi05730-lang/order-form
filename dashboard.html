@@ -544,7 +544,10 @@
   <div class="header">
     <div class="header-top">
       <h1>🎁 주문 대시보드</h1>
-      <span class="header-date" id="todayLabel"></span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="header-date" id="todayLabel"></span>
+        <button onclick="loadOrders()" style="background:rgba(255,255,255,.2);border:none;border-radius:50%;width:32px;height:32px;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">↻</button>
+      </div>
     </div>
     <div class="stat-grid">
       <div class="stat-card">
