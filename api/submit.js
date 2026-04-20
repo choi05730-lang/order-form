@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
   const {
     product, types, quantity, price, note,
     desired_date, delivery, address, image_url,
-    customer_name, customer_phone,
+    customer_name, customer_phone, source,
   } = req.body;
 
   if (!customer_name || !customer_phone) {
@@ -29,6 +29,7 @@ module.exports = async function handler(req, res) {
       image_url: image_url || null,
       customer_name, customer_phone,
       status: '입금대기',
+      source: source || '직접입력',
     }])
     .select()
     .single();

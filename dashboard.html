@@ -471,6 +471,63 @@
       margin-top: 4px;
     }
 
+    /* 플로팅 버튼 */
+    .fab {
+      position: fixed;
+      bottom: 28px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(108,63,255,.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      transition: transform .15s;
+    }
+    .fab:active { transform: scale(.92); }
+
+    /* 출처 선택 */
+    .source-selector {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .source-btn {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--sub);
+      cursor: pointer;
+      transition: all .15s;
+      text-align: center;
+    }
+    .source-btn.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* 이미지 미리보기 */
+    .img-preview {
+      width: 100%;
+      border-radius: 10px;
+      object-fit: cover;
+      max-height: 180px;
+      margin-top: 8px;
+      display: none;
+    }
+
     /* 빈 상태 */
     .empty-state {
       text-align: center;
@@ -544,6 +601,70 @@
         <h3 id="calDayTitle"></h3>
         <div class="order-list" id="calDayList"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- 플로팅 버튼 -->
+  <button class="fab" onclick="openEntryModal()">+</button>
+
+  <!-- 수기입력 모달 -->
+  <div class="modal-overlay" id="entryOverlay" onclick="closeEntryModal(event)">
+    <div class="modal" id="entryModal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2>주문 직접 입력</h2>
+        <button class="modal-close" onclick="closeEntryModalDirect()">✕</button>
+      </div>
+
+      <div class="edit-form">
+        <!-- 출처 -->
+        <div class="edit-group">
+          <label>접수 경로</label>
+          <div class="source-selector">
+            <button class="source-btn active" data-source="전화주문"   onclick="selectSource(this)">📞 전화주문</button>
+            <button class="source-btn"        data-source="현장방문"   onclick="selectSource(this)">🏪 현장방문</button>
+            <button class="source-btn"        data-source="SNS/DM"     onclick="selectSource(this)">💬 SNS/DM</button>
+            <button class="source-btn"        data-source="기타"       onclick="selectSource(this)">📝 기타</button>
+          </div>
+        </div>
+
+        <!-- 고객 정보 -->
+        <div class="edit-group"><label>고객명 *</label><input class="edit-input" id="entry_customer_name" placeholder="홍길동" /></div>
+        <div class="edit-group"><label>연락처</label><input class="edit-input" id="entry_customer_phone" placeholder="010-0000-0000" /></div>
+
+        <!-- 주문 정보 -->
+        <div class="edit-group"><label>제품명</label><input class="edit-input" id="entry_product" placeholder="망고케이크" /></div>
+        <div class="edit-group"><label>종류/옵션</label><input class="edit-input" id="entry_types" placeholder="1호, 생크림" /></div>
+        <div class="edit-group"><label>수량</label><input class="edit-input" id="entry_quantity" placeholder="1" /></div>
+        <div class="edit-group"><label>가격</label><input class="edit-input" id="entry_price" placeholder="45000" /></div>
+        <div class="edit-group"><label>수령 날짜</label><input class="edit-input" id="entry_desired_date" type="date" /></div>
+
+        <!-- 수령 방법 -->
+        <div class="edit-group">
+          <label>수령 방법</label>
+          <div class="source-selector">
+            <button class="source-btn active" data-delivery="pickup"   onclick="selectDelivery(this)">🏪 매장픽업</button>
+            <button class="source-btn"        data-delivery="delivery" onclick="selectDelivery(this)">📦 택배</button>
+          </div>
+        </div>
+        <div class="edit-group" id="entry_address_group" style="display:none;">
+          <label>주소</label><input class="edit-input" id="entry_address" placeholder="배송 주소" />
+        </div>
+
+        <!-- 비고 -->
+        <div class="edit-group"><label>비고/요청사항</label><input class="edit-input" id="entry_note" placeholder="요청사항 입력" /></div>
+
+        <!-- 사진 -->
+        <div class="edit-group">
+          <label>사진</label>
+          <input type="file" accept="image/*" id="entry_image_file" style="display:none" onchange="previewImage(event)" />
+          <button class="edit-input" style="cursor:pointer;text-align:left;color:var(--sub)" onclick="document.getElementById('entry_image_file').click()">📷 사진 선택</button>
+          <img id="entry_img_preview" class="img-preview" />
+        </div>
+      </div>
+
+      <button class="btn-save" id="entry_submit_btn" onclick="submitManualOrder()">저장하기</button>
+      <button class="btn-cancel-edit" onclick="closeEntryModalDirect()">취소</button>
     </div>
   </div>
 
@@ -857,6 +978,123 @@
     function formatDate(str) {
       if (!str) return '-';
       return str.slice(0, 10).replace(/-/g, '.');
+    }
+
+    // ── 수기입력 모달 ──
+    let entrySource   = '전화주문';
+    let entryDelivery = 'pickup';
+    let entryImageB64 = null;
+    let entryImageName = null;
+    let entryImageType = null;
+
+    function openEntryModal() {
+      entrySource = '전화주문';
+      entryDelivery = 'pickup';
+      entryImageB64 = null;
+      document.getElementById('entry_customer_name').value  = '';
+      document.getElementById('entry_customer_phone').value = '';
+      document.getElementById('entry_product').value        = '';
+      document.getElementById('entry_types').value          = '';
+      document.getElementById('entry_quantity').value       = '';
+      document.getElementById('entry_price').value          = '';
+      document.getElementById('entry_desired_date').value   = '';
+      document.getElementById('entry_note').value           = '';
+      document.getElementById('entry_address').value        = '';
+      document.getElementById('entry_image_file').value     = '';
+      document.getElementById('entry_img_preview').style.display = 'none';
+      document.getElementById('entry_address_group').style.display = 'none';
+      document.querySelectorAll('.source-selector .source-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-source="전화주문"]').classList.add('active');
+      document.querySelector('[data-delivery="pickup"]').classList.add('active');
+      document.getElementById('entryOverlay').classList.add('open');
+    }
+
+    function closeEntryModal(e) {
+      if (e.target === document.getElementById('entryOverlay')) closeEntryModalDirect();
+    }
+    function closeEntryModalDirect() {
+      document.getElementById('entryOverlay').classList.remove('open');
+    }
+
+    function selectSource(btn) {
+      document.querySelectorAll('[data-source]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      entrySource = btn.dataset.source;
+    }
+
+    function selectDelivery(btn) {
+      document.querySelectorAll('[data-delivery]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      entryDelivery = btn.dataset.delivery;
+      document.getElementById('entry_address_group').style.display = entryDelivery === 'delivery' ? 'block' : 'none';
+    }
+
+    function previewImage(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      entryImageName = file.name;
+      entryImageType = file.type;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        entryImageB64 = ev.target.result.split(',')[1];
+        const preview = document.getElementById('entry_img_preview');
+        preview.src = ev.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function submitManualOrder() {
+      const name = document.getElementById('entry_customer_name').value.trim();
+      if (!name) { alert('고객명을 입력해주세요.'); return; }
+
+      const btn = document.getElementById('entry_submit_btn');
+      btn.textContent = '저장 중...';
+      btn.disabled = true;
+
+      let image_url = null;
+      if (entryImageB64) {
+        const upRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base64: entryImageB64, filename: entryImageName, contentType: entryImageType }),
+        });
+        if (upRes.ok) {
+          const upData = await upRes.json();
+          image_url = upData.url;
+        }
+      }
+
+      const payload = {
+        customer_name:  name,
+        customer_phone: document.getElementById('entry_customer_phone').value.trim(),
+        product:        document.getElementById('entry_product').value.trim(),
+        types:          document.getElementById('entry_types').value.trim(),
+        quantity:       document.getElementById('entry_quantity').value.trim(),
+        price:          document.getElementById('entry_price').value.trim(),
+        desired_date:   document.getElementById('entry_desired_date').value || null,
+        note:           document.getElementById('entry_note').value.trim(),
+        delivery:       entryDelivery,
+        address:        document.getElementById('entry_address').value.trim(),
+        source:         entrySource,
+        image_url,
+      };
+
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        closeEntryModalDirect();
+        await loadOrders();
+      } else {
+        alert('저장 실패. 다시 시도해주세요.');
+      }
+
+      btn.textContent = '저장하기';
+      btn.disabled = false;
     }
 
     // ── 초기 로드 ──
