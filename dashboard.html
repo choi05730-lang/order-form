@@ -820,7 +820,7 @@
     // ── 생산현황 ──
     function renderProduction() {
       const range = getDateRange(); // 오늘~모레
-      const confirmed = ['입금확인', '결제완료'];
+      const confirmed = ['입금확인', '결제완료', '입금대기'];
 
       const filtered = orders.filter(o =>
         confirmed.includes(o.status) &&
