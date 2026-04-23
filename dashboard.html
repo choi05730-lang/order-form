@@ -277,7 +277,6 @@
     }
     .cal-dot.daelye { background: #3b82f6; }
     .cal-dot.naver  { background: #ef4444; }
-    .cal-dot.store  { background: #03adf5; }
 
     /* 캘린더 아래 선택된 날짜 주문 */
     .cal-day-orders {
@@ -470,16 +469,6 @@
       color: #03C75A;
       margin-top: 4px;
     }
-    .store-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 50px;
-      font-size: 11px;
-      font-weight: 700;
-      background: #e8f0fe;
-      color: #03adf5;
-      margin-top: 4px;
-    }
 
     /* ── 생산현황 ── */
     .production-list { display: flex; flex-direction: column; gap: 10px; }
@@ -599,10 +588,6 @@
       <div class="stat-card">
         <div class="num" id="statPlace">0</div>
         <div class="lbl">스마트플레이스</div>
-      </div>
-      <div class="stat-card">
-        <div class="num" id="statStore">0</div>
-        <div class="lbl">스마트스토어</div>
       </div>
     </div>
   </div>
@@ -842,57 +827,71 @@
         o.desired_date && range.includes(o.desired_date.slice(0, 10))
       );
 
+      const rangeLabel = `${range[0].slice(5).replace('-','/')} ~ ${range[2].slice(5).replace('-','/')}`;
+
       if (filtered.length === 0) {
         document.getElementById('productionList').innerHTML =
           `<div class="empty-state"><div class="icon">🎂</div><p>생산 예정 주문이 없어요</p></div>`;
         return;
       }
 
-      // product + types 기준으로 그룹화
-      const grouped = {};
-      filtered.forEach(o => {
-        const key = (o.product || '미정') + (o.types ? ' / ' + o.types : '');
-        if (!grouped[key]) grouped[key] = { name: o.product || '미정', types: o.types || '', qty: 0, dates: [] };
-        const qty = parseInt(o.quantity) || 1;
-        grouped[key].qty += qty;
-        const d = o.desired_date.slice(0, 10);
-        if (!grouped[key].dates.includes(d)) grouped[key].dates.push(d);
-      });
+      function groupOrders(list) {
+        const grouped = {};
+        list.forEach(o => {
+          const key = (o.product || '미정') + (o.types ? ' / ' + o.types : '');
+          if (!grouped[key]) grouped[key] = { name: o.product || '미정', types: o.types || '', qty: 0, dates: [] };
+          const qty = parseInt(o.quantity) || 1;
+          grouped[key].qty += qty;
+          const d = o.desired_date.slice(0, 10);
+          if (!grouped[key].dates.includes(d)) grouped[key].dates.push(d);
+        });
+        return Object.values(grouped).sort((a, b) => a.dates[0].localeCompare(b.dates[0]));
+      }
 
-      // 가장 빠른 날짜 기준 정렬
-      const sorted = Object.values(grouped).sort((a, b) =>
-        a.dates[0].localeCompare(b.dates[0])
-      );
+      function buildCards(sortedItems) {
+        return sortedItems.map(item => {
+          const dates = item.dates.sort().map(d => {
+            const [,m,day] = d.split('-');
+            return `${parseInt(m)}/${parseInt(day)}`;
+          }).join(', ');
+          const label = item.name + (item.types ? ` <span style="font-weight:500;color:var(--sub)">${item.types}</span>` : '');
+          return `
+            <div class="production-card">
+              <div class="production-info">
+                <div class="production-name">${label}</div>
+                <div class="production-dates">수령일: ${dates}</div>
+              </div>
+              <div class="production-qty">${item.qty}<span>개</span></div>
+            </div>`;
+        }).join('');
+      }
 
-      const html = sorted.map(item => {
-        const dates = item.dates.sort().map(d => {
-          const [,m,day] = d.split('-');
-          return `${parseInt(m)}/${parseInt(day)}`;
-        }).join(', ');
-        const label = item.name + (item.types ? ` <span style="font-weight:500;color:var(--sub)">${item.types}</span>` : '');
-        return `
-          <div class="production-card">
-            <div class="production-info">
-              <div class="production-name">${label}</div>
-              <div class="production-dates">수령일: ${dates}</div>
-            </div>
-            <div class="production-qty">${item.qty}<span>개</span></div>
-          </div>`;
-      }).join('');
+      const giftOrders  = filtered.filter(o => o.source !== '네이버예약');
+      const placeOrders = filtered.filter(o => o.source === '네이버예약');
 
-      const rangeLabel = `${range[0].slice(5).replace('-','/')} ~ ${range[2].slice(5).replace('-','/')}`;
-      document.getElementById('productionList').innerHTML =
-        `<div class="production-section-title">확정 주문 · ${rangeLabel}</div>
-         <div class="production-list">${html}</div>`;
+      let html = '';
+
+      if (giftOrders.length > 0) {
+        const sorted = groupOrders(giftOrders);
+        html += `<div class="production-section-title">답례품 · ${rangeLabel}</div>
+                 <div class="production-list">${buildCards(sorted)}</div>`;
+      }
+
+      if (placeOrders.length > 0) {
+        const sorted = groupOrders(placeOrders);
+        html += `<div class="production-section-title" style="margin-top:${giftOrders.length > 0 ? '20px' : '16px'}">스마트플레이스 · ${rangeLabel}</div>
+                 <div class="production-list">${buildCards(sorted)}</div>`;
+      }
+
+      document.getElementById('productionList').innerHTML = html;
     }
 
     // ── 통계 (오늘~+2일 기준) ──
     function updateStats() {
       const range = getDateRange();
       const inRange = o => o.desired_date && range.includes(o.desired_date.slice(0, 10));
-      document.getElementById('statGift').textContent  = orders.filter(o => inRange(o) && o.source !== '네이버예약' && o.source !== '스마트스토어').length;
+      document.getElementById('statGift').textContent  = orders.filter(o => inRange(o) && o.source !== '네이버예약').length;
       document.getElementById('statPlace').textContent = orders.filter(o => inRange(o) && o.source === '네이버예약').length;
-      document.getElementById('statStore').textContent = orders.filter(o => inRange(o) && o.source === '스마트스토어').length;
     }
 
     // ── 카드 HTML ──
@@ -904,7 +903,7 @@
             <div>
               <div class="customer-name">${o.customer_name}</div>
               <div class="customer-phone">${o.customer_phone || ''}</div>
-              ${o.source === '네이버예약' ? '<span class="naver-badge">N 네이버예약</span>' : o.source === '스마트스토어' ? '<span class="store-badge">S 스마트스토어</span>' : ''}
+              ${o.source === '네이버예약' ? '<span class="naver-badge">N 네이버예약</span>' : ''}
             </div>
             <span class="status-badge ${cls}">${o.status}</span>
           </div>
@@ -969,7 +968,6 @@
         const dayOrders = ordersByDate[dateStr] || [];
         const dots = dayOrders.slice(0,4).map(o => {
           if (o.source === '네이버예약')  return `<div class="cal-dot naver"></div>`;
-          if (o.source === '스마트스토어') return `<div class="cal-dot store"></div>`;
           return `<div class="cal-dot daelye"></div>`;
         }).join('');
         html += `<div class="cal-cell ${isToday ? 'today' : ''}" onclick="selectCalDay('${dateStr}')">
@@ -1022,7 +1020,7 @@
         <div class="modal-field"><span class="modal-field-key">날짜</span><span class="modal-field-val">${o.desired_date ? o.desired_date.replace(/-/g,'.') : '-'}</span></div>
         <div class="modal-field"><span class="modal-field-key">비고</span><span class="modal-field-val">${o.note || '-'}</span></div>
         <div class="modal-field"><span class="modal-field-key">주문일시</span><span class="modal-field-val">${formatDate(o.created_at)}</span></div>
-        ${o.source === '네이버예약' ? '<div class="modal-field"><span class="modal-field-key">접수경로</span><span class="modal-field-val"><span class="naver-badge">N 네이버예약</span></span></div>' : o.source === '스마트스토어' ? '<div class="modal-field"><span class="modal-field-key">접수경로</span><span class="modal-field-val"><span class="store-badge">S 스마트스토어</span></span></div>' : ''}
+        ${o.source === '네이버예약' ? '<div class="modal-field"><span class="modal-field-key">접수경로</span><span class="modal-field-val"><span class="naver-badge">N 네이버예약</span></span></div>' : ''}
       `;
 
       document.querySelectorAll('.status-change-btn').forEach(btn => {
