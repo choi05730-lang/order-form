@@ -10,6 +10,17 @@ module.exports = async function handler(req, res) {
   if (allowed) res.setHeader('Access-Control-Allow-Origin', allowed);
 
   if (req.method === 'GET') {
+    const code = req.query && req.query.code;
+    if (code) {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('link_code', code)
+        .maybeSingle();
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json(data || null);
+    }
+
     const { data, error } = await supabase
       .from('orders')
       .select('*')

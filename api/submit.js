@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
   const {
     product, types, quantity, price, note,
     desired_date, delivery, address, image_url,
-    customer_name, customer_phone, source,
+    customer_name, customer_phone, source, link_code,
   } = req.body;
 
   if (!customer_name || !customer_phone) {
@@ -30,6 +30,7 @@ module.exports = async function handler(req, res) {
       customer_name, customer_phone,
       status: '입금대기',
       source: source || '직접입력',
+      link_code: link_code || null,
     }])
     .select()
     .single();

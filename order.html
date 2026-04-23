@@ -599,6 +599,38 @@
     </p>
   </div>
 
+  <!-- 이미 제출된 경우: 접수 완료 화면 -->
+  <div class="view" id="view-done">
+    <div class="complete-icon">✅</div>
+    <div class="complete-title">주문이 접수되었습니다</div>
+    <div class="complete-sub">아래 내용으로 주문이 접수되었습니다</div>
+
+    <div class="field-list" id="doneOrderFields"></div>
+
+    <div class="account-card" style="margin-top:24px;">
+      <div class="account-label">입금 계좌</div>
+      <div class="account-row">
+        <span class="account-key">입금 금액</span>
+        <span id="doneAmount" style="font-weight:800; color:#F97316; font-size:16px;"></span>
+      </div>
+      <div class="account-row">
+        <span class="account-key">은행</span>
+        <span id="doneBank"></span>
+      </div>
+      <div class="account-row">
+        <span class="account-key">예금주</span>
+        <span id="doneHolder"></span>
+      </div>
+      <div class="account-num" id="doneNumber"></div>
+      <button class="btn-copy-account" onclick="copyDoneAccount()">계좌번호 복사하기</button>
+    </div>
+
+    <p class="account-notice">
+      입금자명을 <strong>주문자 이름</strong>과 동일하게 해주세요.<br />
+      입금 확인 후 주문이 최종 확정됩니다.
+    </p>
+  </div>
+
   <!-- 주소검색 오버레이 -->
   <div id="postcodeOverlay">
     <div id="postcodeHeader">
@@ -669,6 +701,17 @@
       const dataParam = params.get('d');
 
       if (code) {
+        try {
+          const checkRes = await fetch(`/api/orders?code=${encodeURIComponent(code)}`);
+          if (checkRes.ok) {
+            const existing = await checkRes.json();
+            if (existing && existing.id) {
+              showDoneView(existing);
+              return;
+            }
+          }
+        } catch(e) {}
+
         try {
           const url = `https://orvwmmrqyqgbjcyiqqqr.supabase.co/storage/v1/object/public/order-links/${code}.json`;
           const res = await fetch(url);
@@ -777,11 +820,13 @@
         parsedOrder.address = detail ? `${addr} ${detail}` : addr;
       }
 
+      const code = new URLSearchParams(window.location.search).get('c');
       const orderData = {
         ...parsedOrder,
         customer_name: name,
         customer_phone: phone,
         source: '답례품주문',
+        link_code: code || null,
       };
 
       try {
@@ -814,6 +859,52 @@
           overlay.classList.remove('open');
         }
       }).embed(wrap);
+    }
+
+    function showDoneView(order) {
+      document.querySelector('.steps').style.display = 'none';
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-done').classList.add('active');
+
+      const rows = [
+        { key: '제품명',    val: order.product },
+        { key: '종류',      val: order.types },
+        { key: '박스 갯수', val: order.quantity },
+        { key: '가격',      val: order.price },
+        { key: '수령일',    val: order.desired_date ? order.desired_date.replace(/-/g, '.') : null },
+        { key: '수령 방법', val: order.delivery === 'delivery' ? '📦 택배' : '🏪 매장 픽업' },
+        { key: '주문자',    val: order.customer_name },
+        { key: '연락처',    val: order.customer_phone },
+        { key: '비고',      val: order.note },
+        { key: '배송 주소', val: order.delivery === 'delivery' ? order.address : null },
+      ];
+
+      document.getElementById('doneOrderFields').innerHTML = rows
+        .filter(r => r.val)
+        .map(r => `<div class="field-row"><span class="field-key">${r.key}</span><span class="field-val">${r.val}</span></div>`)
+        .join('');
+
+      fetch('/api/account')
+        .then(r => r.json())
+        .then(({ bankName, accountNo, accountName }) => {
+          document.getElementById('doneBank').textContent   = bankName;
+          document.getElementById('doneHolder').textContent = accountName;
+          document.getElementById('doneNumber').textContent = accountNo;
+          document.getElementById('doneAmount').textContent = order.price || '-';
+          window._doneAccountNo = accountNo;
+        })
+        .catch(() => {});
+    }
+
+    function copyDoneAccount() {
+      const no = window._doneAccountNo || '';
+      navigator.clipboard.writeText(no).catch(() => {
+        const el = document.createElement('textarea');
+        el.value = no; document.body.appendChild(el);
+        el.select(); document.execCommand('copy');
+        document.body.removeChild(el);
+      });
+      showToast(`${no} 복사됨`);
     }
 
     function closePostcode() {
