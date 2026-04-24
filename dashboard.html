@@ -835,24 +835,42 @@
         return;
       }
 
+      function extractTime(note) {
+        if (!note) return '';
+        const numMatch = note.match(/\d{1,2}:\d{2}/);
+        if (numMatch) return numMatch[0];
+        const krMatch = note.match(/(오전|오후)\s*(\d{1,2})시(?:\s*(\d{1,2})분)?/);
+        if (krMatch) {
+          let h = parseInt(krMatch[2]);
+          const min = krMatch[3] ? parseInt(krMatch[3]) : 0;
+          if (krMatch[1] === '오후' && h !== 12) h += 12;
+          if (krMatch[1] === '오전' && h === 12) h = 0;
+          return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+        }
+        return '';
+      }
+
       function groupOrders(list) {
         const grouped = {};
         list.forEach(o => {
           const key = (o.product || '미정') + (o.types ? ' / ' + o.types : '');
-          if (!grouped[key]) grouped[key] = { name: o.product || '미정', types: o.types || '', qty: 0, dates: [] };
+          if (!grouped[key]) grouped[key] = { name: o.product || '미정', types: o.types || '', qty: 0, datetimes: [] };
           const qty = parseInt(o.quantity) || 1;
           grouped[key].qty += qty;
           const d = o.desired_date.slice(0, 10);
-          if (!grouped[key].dates.includes(d)) grouped[key].dates.push(d);
+          const t = extractTime(o.note);
+          const dt = t ? `${d} ${t}` : d;
+          if (!grouped[key].datetimes.includes(dt)) grouped[key].datetimes.push(dt);
         });
-        return Object.values(grouped).sort((a, b) => a.dates[0].localeCompare(b.dates[0]));
+        return Object.values(grouped).sort((a, b) => a.datetimes[0].localeCompare(b.datetimes[0]));
       }
 
       function buildCards(sortedItems) {
         return sortedItems.map(item => {
-          const dates = item.dates.sort().map(d => {
-            const [,m,day] = d.split('-');
-            return `${parseInt(m)}/${parseInt(day)}`;
+          const dates = item.datetimes.sort().map(dt => {
+            const [dateStr, timeStr] = dt.split(' ');
+            const [,m,day] = dateStr.split('-');
+            return timeStr ? `${parseInt(m)}/${parseInt(day)} ${timeStr}` : `${parseInt(m)}/${parseInt(day)}`;
           }).join(', ');
           const label = item.name + (item.types ? ` <span style="font-weight:500;color:var(--sub)">${item.types}</span>` : '');
           return `
