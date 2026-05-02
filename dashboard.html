@@ -828,6 +828,7 @@
 
   <script>
     let orders = [];
+    const prodRowRegistry = {};
     const STATUS_LABEL = { '입금대기': '입금대기', '입금확인': '입금확인', '완료': '완료', '취소': '취소', '결제완료': '결제완료' };
     const STATUS_CLASS  = { '입금대기': 'pending', '입금확인': 'paid', '완료': 'completed', '취소': 'cancelled', '결제완료': 'paid' };
     let currentFilter = 'all';
@@ -854,19 +855,30 @@
 
     // ── 시간 추출 (전역) ──
     function extractTime(note, desiredDate) {
+      // desired_date에 시간이 포함된 경우 (ISO datetime)
       if (desiredDate && desiredDate.includes('T')) {
         const t = desiredDate.slice(11, 16);
         if (t && t !== '00:00') return t;
       }
       if (!note) return '';
+      // HH:MM 형식
       const numMatch = note.match(/\d{1,2}:\d{2}/);
       if (numMatch) return numMatch[0];
+      // 오전/오후 N시 M분
       const krMatch = note.match(/(오전|오후)\s*(\d{1,2})시(?:\s*(\d{1,2})분)?/);
       if (krMatch) {
         let h = parseInt(krMatch[2]);
         const min = krMatch[3] ? parseInt(krMatch[3]) : 0;
         if (krMatch[1] === '오후' && h !== 12) h += 12;
         if (krMatch[1] === '오전' && h === 12) h = 0;
+        return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+      }
+      // 오전/오후 없는 순수 "N시 M분" — 베이커리 픽업 기준 1~9시는 오후로 간주
+      const bareMatch = note.match(/(\d{1,2})시(?:\s*(\d{1,2})분)?/);
+      if (bareMatch) {
+        let h = parseInt(bareMatch[1]);
+        const min = bareMatch[2] ? parseInt(bareMatch[2]) : 0;
+        if (h >= 1 && h <= 9) h += 12; // 오후
         return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
       }
       return '';
@@ -912,11 +924,12 @@
     }
 
     // ── 생산현황 빠른 완료 ──
-    async function quickComplete(ids, e) {
+    async function quickCompleteByKey(rowKey, e) {
       e.stopPropagation();
-      const btn = e.currentTarget;
+      const btn = e.target;
       btn.textContent = '…';
       btn.disabled = true;
+      const ids = prodRowRegistry[rowKey] || [];
       for (const id of ids) {
         await fetch('/api/orders', {
           method: 'PATCH',
@@ -976,20 +989,20 @@
             : `<div class="prod-time no-time">⚠️ 시간미정</div>`;
           const typesHtml = item.types ? `<span class="prod-types">${item.types}</span>` : '';
           const ids = item.orders.map(o => o.id);
+          const rowKey = 'row_' + Math.random().toString(36).slice(2);
+          prodRowRegistry[rowKey] = ids;
           const customerText = item.orders.length === 1
             ? item.orders[0].customer_name
             : `${item.orders[0].customer_name} 외 ${item.orders.length - 1}명`;
-          const customerClick = item.orders.length === 1
-            ? `openModal('${item.orders[0].id}')`
-            : `openModal('${item.orders[0].id}')`;
+          const firstId = item.orders[0].id;
           return `<div class="prod-row${hasTime ? '' : ' row-no-time'}">
             ${timeHtml}
             <div class="prod-name-wrap">
               <div class="prod-name">${item.name}${typesHtml}</div>
-              <div class="prod-customer" onclick="${customerClick}">${customerText}</div>
+              <div class="prod-customer" onclick="openModal('${firstId}')">${customerText}</div>
             </div>
             <div class="prod-qty">×${item.qty}</div>
-            <button class="prod-done-btn" onclick="quickComplete(${JSON.stringify(ids)}, event)" title="완료 처리">✓</button>
+            <button class="prod-done-btn" data-rowkey="${rowKey}" onclick="quickCompleteByKey(this.dataset.rowkey, event)" title="완료 처리">✓</button>
           </div>`;
         }).join('');
       }
