@@ -524,6 +524,7 @@
       border-bottom: 1px solid var(--border);
       margin-bottom: 2px;
     }
+    .prod-row { cursor: pointer; }
     .prod-row {
       display: flex;
       align-items: center;
@@ -742,6 +743,7 @@
             <button class="source-btn active" data-source="전화주문"   onclick="selectSource(this)">📞 전화주문</button>
             <button class="source-btn"        data-source="현장방문"   onclick="selectSource(this)">🏪 현장방문</button>
             <button class="source-btn"        data-source="SNS/DM"     onclick="selectSource(this)">💬 SNS/DM</button>
+            <button class="source-btn"        data-source="네이버예약" onclick="selectSource(this)">🟢 네이버예약</button>
             <button class="source-btn"        data-source="기타"       onclick="selectSource(this)">📝 기타</button>
           </div>
         </div>
@@ -756,6 +758,7 @@
         <div class="edit-group"><label>수량</label><input class="edit-input" id="entry_quantity" placeholder="1" /></div>
         <div class="edit-group"><label>가격</label><input class="edit-input" id="entry_price" placeholder="45000" /></div>
         <div class="edit-group"><label>수령 날짜</label><input class="edit-input" id="entry_desired_date" type="date" /></div>
+        <div class="edit-group" id="entry_pickup_time_group" style="display:none;"><label>예약 시간</label><input class="edit-input" id="entry_pickup_time" type="time" /></div>
 
         <!-- 수령 방법 -->
         <div class="edit-group">
@@ -817,6 +820,7 @@
           <div class="edit-group"><label>수량</label><input class="edit-input" id="edit_quantity" /></div>
           <div class="edit-group"><label>가격</label><input class="edit-input" id="edit_price" /></div>
           <div class="edit-group"><label>날짜</label><input class="edit-input" id="edit_desired_date" type="date" /></div>
+          <div class="edit-group"><label>예약 시간</label><input class="edit-input" id="edit_pickup_time" type="time" /></div>
           <div class="edit-group"><label>비고</label><input class="edit-input" id="edit_note" /></div>
           <div class="edit-group"><label>주소</label><input class="edit-input" id="edit_address" /></div>
         </div>
@@ -995,11 +999,11 @@
             ? item.orders[0].customer_name
             : `${item.orders[0].customer_name} 외 ${item.orders.length - 1}명`;
           const firstId = item.orders[0].id;
-          return `<div class="prod-row${hasTime ? '' : ' row-no-time'}">
+          return `<div class="prod-row${hasTime ? '' : ' row-no-time'}" onclick="openModal('${firstId}')">
             ${timeHtml}
             <div class="prod-name-wrap">
               <div class="prod-name">${item.name}${typesHtml}</div>
-              <div class="prod-customer" onclick="openModal('${firstId}')">${customerText}</div>
+              <div class="prod-customer">${customerText}</div>
             </div>
             <div class="prod-qty">×${item.qty}</div>
             <button class="prod-done-btn" data-rowkey="${rowKey}" onclick="quickCompleteByKey(this.dataset.rowkey, event)" title="완료 처리">✓</button>
@@ -1225,7 +1229,9 @@
       document.getElementById('edit_types').value          = o.types || '';
       document.getElementById('edit_quantity').value       = o.quantity || '';
       document.getElementById('edit_price').value          = o.price || '';
-      document.getElementById('edit_desired_date').value   = o.desired_date || '';
+      const [editDate, editTime] = (o.desired_date || '').split('T');
+      document.getElementById('edit_desired_date').value   = editDate || '';
+      document.getElementById('edit_pickup_time').value    = editTime || '';
       document.getElementById('edit_note').value           = o.note || '';
       document.getElementById('edit_address').value        = o.address || '';
       document.getElementById('modalView').style.display = 'none';
@@ -1250,7 +1256,12 @@
         types:          document.getElementById('edit_types').value.trim(),
         quantity:       document.getElementById('edit_quantity').value.trim(),
         price:          document.getElementById('edit_price').value.trim(),
-        desired_date:   document.getElementById('edit_desired_date').value || null,
+        desired_date:   (() => {
+          const d = document.getElementById('edit_desired_date').value;
+          const t = document.getElementById('edit_pickup_time').value;
+          if (!d) return null;
+          return t ? `${d}T${t}` : d;
+        })(),
         note:           document.getElementById('edit_note').value.trim(),
         address:        document.getElementById('edit_address').value.trim(),
       };
@@ -1300,6 +1311,8 @@
       document.getElementById('entry_quantity').value       = '';
       document.getElementById('entry_price').value          = '';
       document.getElementById('entry_desired_date').value   = '';
+      document.getElementById('entry_pickup_time').value    = '';
+      document.getElementById('entry_pickup_time_group').style.display = 'none';
       document.getElementById('entry_note').value           = '';
       document.getElementById('entry_address').value        = '';
       document.getElementById('entry_image_file').value     = '';
@@ -1322,6 +1335,8 @@
       document.querySelectorAll('[data-source]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       entrySource = btn.dataset.source;
+      document.getElementById('entry_pickup_time_group').style.display =
+        entrySource === '네이버예약' ? 'block' : 'none';
     }
 
     function selectDelivery(btn) {
@@ -1374,7 +1389,12 @@
         types:          document.getElementById('entry_types').value.trim(),
         quantity:       document.getElementById('entry_quantity').value.trim(),
         price:          document.getElementById('entry_price').value.trim(),
-        desired_date:   document.getElementById('entry_desired_date').value || null,
+        desired_date:   (() => {
+          const d = document.getElementById('entry_desired_date').value;
+          const t = document.getElementById('entry_pickup_time').value;
+          if (!d) return null;
+          return t ? `${d}T${t}` : d;
+        })(),
         note:           document.getElementById('entry_note').value.trim(),
         delivery:       entryDelivery,
         address:        document.getElementById('entry_address').value.trim(),
