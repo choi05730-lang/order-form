@@ -277,6 +277,7 @@
     }
     .cal-dot.daelye { background: #3b82f6; }
     .cal-dot.naver  { background: #ef4444; }
+    .cal-dot.notion { background: #b5341a; }
 
     /* 캘린더 아래 선택된 날짜 주문 */
     .cal-day-orders {
@@ -504,9 +505,10 @@
       font-size: 11px;
       font-weight: 700;
     }
-    .day-count-badge.gift  { background: #ede9ff; color: var(--primary); }
-    .day-count-badge.place { background: #e8f9ee; color: #03C75A; }
-    .day-count-badge.empty { background: #f0f0f0; color: #bbb; }
+    .day-count-badge.gift   { background: #ede9ff; color: var(--primary); }
+    .day-count-badge.place  { background: #e8f9ee; color: #03C75A; }
+    .day-count-badge.empty  { background: #f0f0f0; color: #bbb; }
+    .day-count-badge.notion { background: #fff0ee; color: #b5341a; }
     .day-empty {
       padding: 20px 16px;
       text-align: center;
@@ -533,7 +535,8 @@
       border-bottom: 1px solid #f5f5f5;
     }
     .prod-row:last-child { border-bottom: none; }
-    .prod-row.row-no-time { background: #fffbf0; border-radius: 8px; padding: 8px 8px; margin: 2px -8px; border-bottom: none; }
+    .prod-row.row-no-time  { background: #fffbf0; border-radius: 8px; padding: 8px 8px; margin: 2px -8px; border-bottom: none; }
+    .prod-row.prod-row-done { opacity: 0.38; }
     .prod-time {
       flex: 0 0 50px;
       font-size: 13px;
@@ -569,6 +572,10 @@
       transition: all .15s;
     }
     .prod-done-btn:active { background: var(--completed); border-color: var(--completed); color: #fff; }
+    .modal-notion .btn-edit,
+    .modal-notion .btn-delete { display: none; }
+    .modal-notion .status-change-btn[data-status="입금대기"],
+    .modal-notion .status-change-btn[data-status="입금확인"] { display: none; }
 
     /* ── 목록 긴급 강조 ── */
     .order-card.urgent {
@@ -674,6 +681,10 @@
       <div class="stat-card">
         <div class="num" id="statPlace">0</div>
         <div class="lbl">스마트플레이스</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="statNotion">0</div>
+        <div class="lbl">가정의달</div>
       </div>
     </div>
   </div>
@@ -833,8 +844,8 @@
   <script>
     let orders = [];
     const prodRowRegistry = {};
-    const STATUS_LABEL = { '입금대기': '입금대기', '입금확인': '입금확인', '완료': '완료', '취소': '취소', '결제완료': '결제완료' };
-    const STATUS_CLASS  = { '입금대기': 'pending', '입금확인': 'paid', '완료': 'completed', '취소': 'cancelled', '결제완료': 'paid' };
+    const STATUS_LABEL = { '입금대기': '입금대기', '입금확인': '입금확인', '완료': '완료', '취소': '취소', '결제완료': '결제완료', '접수': '접수' };
+    const STATUS_CLASS  = { '입금대기': 'pending', '입금확인': 'paid', '완료': 'completed', '취소': 'cancelled', '결제완료': 'paid', '접수': 'pending' };
     let currentFilter = 'all';
     let currentOrderId = null;
     let calYear, calMonth;
@@ -888,18 +899,24 @@
       return '';
     }
 
-    // ── Supabase 연동 ──
+    // ── 주문 로드 (Supabase + Notion) ──
     async function loadOrders() {
-      const res = await fetch('/api/orders');
-      if (!res.ok) return;
-      orders = await res.json();
+      const [supaRes, notionRes] = await Promise.all([
+        fetch('/api/orders'),
+        fetch('/api/notion-orders'),
+      ]);
+      const supaOrders   = supaRes.ok   ? await supaRes.json()   : [];
+      const notionOrders = notionRes.ok ? await notionRes.json() : [];
+      orders = [...supaOrders, ...notionOrders];
       updateStats();
       renderProduction();
     }
 
     async function changeStatus(status) {
       if (!currentOrderId) return;
-      await fetch('/api/orders', {
+      const curOrder  = orders.find(x => x.id === currentOrderId);
+      const isNotion  = curOrder?._source === 'notion';
+      await fetch(isNotion ? '/api/notion-orders' : '/api/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: currentOrderId, status }),
@@ -935,12 +952,13 @@
       btn.disabled = true;
       const ids = prodRowRegistry[rowKey] || [];
       for (const id of ids) {
-        await fetch('/api/orders', {
+        const o        = orders.find(x => x.id === id);
+        const isNotion = o?._source === 'notion';
+        await fetch(isNotion ? '/api/notion-orders' : '/api/orders', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id, status: '완료' }),
         });
-        const o = orders.find(x => x.id === id);
         if (o) o.status = '완료';
       }
       updateStats();
@@ -960,10 +978,10 @@
 
     // ── 생산현황 ──
     function renderProduction() {
-      const range = getDateRange(); // [오늘, 내일, 모레]
-      const confirmed = ['입금확인', '결제완료', '입금대기'];
+      const range     = getDateRange(); // [오늘, 내일, 모레]
+      const confirmed  = ['입금확인', '결제완료', '입금대기', '접수', '완료'];
       const DAY_LABELS = ['오늘', '내일', '모레'];
-      const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+      const WEEKDAYS   = ['일', '월', '화', '수', '목', '금', '토'];
 
       const filtered = orders.filter(o =>
         confirmed.includes(o.status) &&
@@ -987,7 +1005,8 @@
 
       function buildRows(items) {
         return items.map(item => {
-          const hasTime = !!item.time;
+          const hasTime  = !!item.time;
+          const isDone   = item.orders.every(o => o.status === '완료');
           const timeHtml = hasTime
             ? `<div class="prod-time">${item.time}</div>`
             : `<div class="prod-time no-time">⚠️ 시간미정</div>`;
@@ -999,7 +1018,7 @@
             ? item.orders[0].customer_name
             : `${item.orders[0].customer_name} 외 ${item.orders.length - 1}명`;
           const firstId = item.orders[0].id;
-          return `<div class="prod-row${hasTime ? '' : ' row-no-time'}" onclick="openModal('${firstId}')">
+          return `<div class="prod-row${hasTime ? '' : ' row-no-time'}${isDone ? ' prod-row-done' : ''}" onclick="openModal('${firstId}')">
             ${timeHtml}
             <div class="prod-name-wrap">
               <div class="prod-name">${item.name}${typesHtml}</div>
@@ -1011,12 +1030,37 @@
         }).join('');
       }
 
+      function buildNotionRows(list) {
+        const sorted = list.slice().sort((a, b) => {
+          const startH = t => parseInt((t || '99시').match(/\d+/)?.[0] ?? 99);
+          return startH(a._pickupTime) - startH(b._pickupTime);
+        });
+        return sorted.map(o => {
+          const isDone   = o.status === '완료';
+          const timeHtml = o._pickupTime
+            ? `<div class="prod-time">${o._pickupTime}</div>`
+            : `<div class="prod-time no-time">⚠️ 시간미정</div>`;
+          const rowKey = 'row_' + Math.random().toString(36).slice(2);
+          prodRowRegistry[rowKey] = [o.id];
+          return `<div class="prod-row${isDone ? ' prod-row-done' : ''}" onclick="openModal('${o.id}')">
+            ${timeHtml}
+            <div class="prod-name-wrap">
+              <div class="prod-name">${o.product}</div>
+              <div class="prod-customer">${o.customer_name}</div>
+            </div>
+            <div class="prod-qty">×${o.quantity}</div>
+            <button class="prod-done-btn" data-rowkey="${rowKey}" onclick="quickCompleteByKey(this.dataset.rowkey, event)" title="완료 처리">✓</button>
+          </div>`;
+        }).join('');
+      }
+
       let html = '';
 
       range.forEach((dateStr, idx) => {
-        const dayOrders  = filtered.filter(o => o.desired_date.slice(0, 10) === dateStr);
-        const giftOrders  = dayOrders.filter(o => o.source !== '네이버예약');
-        const placeOrders = dayOrders.filter(o => o.source === '네이버예약');
+        const dayOrders    = filtered.filter(o => o.desired_date.slice(0, 10) === dateStr);
+        const notionOrders = dayOrders.filter(o => o.source === '가정의달');
+        const giftOrders   = dayOrders.filter(o => o.source !== '네이버예약' && o.source !== '가정의달');
+        const placeOrders  = dayOrders.filter(o => o.source === '네이버예약');
 
         const d  = new Date(dateStr + 'T00:00:00');
         const wd = WEEKDAYS[d.getDay()];
@@ -1026,8 +1070,9 @@
         if (dayOrders.length === 0) {
           countHtml = '<span class="day-count-badge empty">준비 없음</span>';
         } else {
-          if (giftOrders.length)  countHtml += `<span class="day-count-badge gift">답례품 ${giftOrders.length}</span>`;
-          if (placeOrders.length) countHtml += `<span class="day-count-badge place">스플 ${placeOrders.length}</span>`;
+          if (giftOrders.length)   countHtml += `<span class="day-count-badge gift">답례품 ${giftOrders.length}</span>`;
+          if (placeOrders.length)  countHtml += `<span class="day-count-badge place">스플 ${placeOrders.length}</span>`;
+          if (notionOrders.length) countHtml += `<span class="day-count-badge notion">가정의달 ${notionOrders.length}</span>`;
         }
 
         let bodyHtml = '';
@@ -1044,6 +1089,12 @@
             bodyHtml += `<div class="day-source-group">
               <div class="day-source-label">스마트플레이스</div>
               ${buildRows(groupByTimeSize(placeOrders))}
+            </div>`;
+          }
+          if (notionOrders.length > 0) {
+            bodyHtml += `<div class="day-source-group">
+              <div class="day-source-label">가정의달</div>
+              ${buildNotionRows(notionOrders)}
             </div>`;
           }
         }
@@ -1064,8 +1115,9 @@
     function updateStats() {
       const range = getDateRange();
       const inRange = o => o.desired_date && range.includes(o.desired_date.slice(0, 10));
-      document.getElementById('statGift').textContent  = orders.filter(o => inRange(o) && o.source !== '네이버예약').length;
-      document.getElementById('statPlace').textContent = orders.filter(o => inRange(o) && o.source === '네이버예약').length;
+      document.getElementById('statGift').textContent   = orders.filter(o => inRange(o) && o.source !== '네이버예약' && o.source !== '가정의달').length;
+      document.getElementById('statPlace').textContent  = orders.filter(o => inRange(o) && o.source === '네이버예약').length;
+      document.getElementById('statNotion').textContent = orders.filter(o => inRange(o) && o.source === '가정의달').length;
     }
 
     // ── 카드 HTML ──
@@ -1149,7 +1201,8 @@
         const isToday = (calYear === today.getFullYear() && calMonth === today.getMonth() && d === today.getDate());
         const dayOrders = ordersByDate[dateStr] || [];
         const dots = dayOrders.slice(0,4).map(o => {
-          if (o.source === '네이버예약')  return `<div class="cal-dot naver"></div>`;
+          if (o.source === '네이버예약') return `<div class="cal-dot naver"></div>`;
+          if (o.source === '가정의달')  return `<div class="cal-dot notion"></div>`;
           return `<div class="cal-dot daelye"></div>`;
         }).join('');
         html += `<div class="cal-cell ${isToday ? 'today' : ''}" onclick="selectCalDay('${dateStr}')">
@@ -1203,11 +1256,15 @@
         <div class="modal-field"><span class="modal-field-key">비고</span><span class="modal-field-val">${o.note || '-'}</span></div>
         <div class="modal-field"><span class="modal-field-key">주문일시</span><span class="modal-field-val">${formatDate(o.created_at)}</span></div>
         ${o.source === '네이버예약' ? '<div class="modal-field"><span class="modal-field-key">접수경로</span><span class="modal-field-val"><span class="naver-badge">N 네이버예약</span></span></div>' : ''}
+        ${o.source === '가정의달'   ? '<div class="modal-field"><span class="modal-field-key">접수경로</span><span class="modal-field-val">🌸 가정의달 주문서</span></div>' : ''}
       `;
 
       document.querySelectorAll('.status-change-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.status === o.status);
       });
+      const modal = document.getElementById('modal');
+      if (o._source === 'notion') modal.classList.add('modal-notion');
+      else modal.classList.remove('modal-notion');
       document.getElementById('modalOverlay').classList.add('open');
     }
 
