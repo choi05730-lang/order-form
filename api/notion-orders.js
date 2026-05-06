@@ -78,7 +78,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const pages  = await queryAll();
-      const orders = pages.map(normalize);
+      const orders = pages.map(normalize).filter(o => o.customer_name.trim() !== '');
       return res.status(200).json(orders);
     } catch (err) {
       return res.status(500).json({ error: err.message });
