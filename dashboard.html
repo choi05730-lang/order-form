@@ -850,20 +850,29 @@
     let currentOrderId = null;
     let calYear, calMonth;
 
+    // KST(UTC+9) 기준 날짜 문자열 반환
+    function toKSTDateString(d) {
+      return new Date(d.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    }
+
     const today = new Date();
-    calYear  = today.getFullYear();
-    calMonth = today.getMonth();
+    const _todayKST = new Date(today.getTime() + 9 * 60 * 60 * 1000);
+    const kstYear  = _todayKST.getUTCFullYear();
+    const kstMonth = _todayKST.getUTCMonth();
+    const kstDate  = _todayKST.getUTCDate();
+    calYear  = kstYear;
+    calMonth = kstMonth;
 
     document.getElementById('todayLabel').textContent =
-      `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
+      `${kstYear}.${String(kstMonth+1).padStart(2,'0')}.${String(kstDate).padStart(2,'0')}`;
 
-    // 오늘~+2일 날짜 범위
+    // 오늘~+2일 날짜 범위 (KST 기준)
     function getDateRange() {
       const dates = [];
       for (let i = 0; i < 3; i++) {
         const d = new Date(today);
         d.setDate(d.getDate() + i);
-        dates.push(d.toISOString().slice(0, 10));
+        dates.push(toKSTDateString(d));
       }
       return dates; // [오늘, 내일, 모레]
     }
@@ -1123,7 +1132,7 @@
     // ── 카드 HTML ──
     function orderCardHTML(o, mini = false) {
       const cls = STATUS_CLASS[o.status] || 'pending';
-      const todayStr = today.toISOString().slice(0, 10);
+      const todayStr = toKSTDateString(today);
       const isUrgent = o.desired_date && o.desired_date.slice(0, 10) === todayStr && o.status === '입금대기';
       const pickupTime = extractTime(o.note, o.desired_date);
       const pickupLabel = o.desired_date
@@ -1154,7 +1163,7 @@
 
     // ── 목록 렌더 (취소 포함) ──
     function renderList() {
-      const todayStr = today.toISOString().slice(0, 10);
+      const todayStr = toKSTDateString(today);
       const base = orders.filter(o => !o.desired_date || o.desired_date.slice(0, 10) >= todayStr);
       const filtered = currentFilter === 'all'
         ? base
@@ -1198,7 +1207,7 @@
       for (let i = 0; i < firstDay; i++) html += `<div class="cal-cell empty"></div>`;
       for (let d = 1; d <= lastDate; d++) {
         const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const isToday = (calYear === today.getFullYear() && calMonth === today.getMonth() && d === today.getDate());
+        const isToday = (calYear === kstYear && calMonth === kstMonth && d === kstDate);
         const dayOrders = ordersByDate[dateStr] || [];
         const dots = dayOrders.slice(0,4).map(o => {
           if (o.source === '네이버예약') return `<div class="cal-dot naver"></div>`;
