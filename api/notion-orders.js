@@ -47,6 +47,8 @@ function normalize(page) {
     address:        text(p['배송지']) !== '-' ? text(p['배송지']) : '',
     _source:        'notion',
     _pickupTime:    pickupTime,
+    _bojagi:        bojagi,
+    _small:         small,
   };
 }
 
